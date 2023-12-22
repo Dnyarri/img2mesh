@@ -6,8 +6,6 @@
 # 003 - squares folding according to gradient, made mesh smoother
 # 004 - minor internal cleanup, 
 
-import os
-import math
 import time
 from PIL import Image
 from tkinter import filedialog
