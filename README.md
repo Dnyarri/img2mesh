@@ -11,4 +11,5 @@ Python utilities for conversion of bitmap heightfield (PNG etc) to 3D triangle m
 *Usage:* programs are equipped with minimal GUI, so all you have to do after starting the programs is use standard "Open..." GUI to open image file, then use standard "Save..." GUI to set POVRay scene file to be created, then wait while program does the job, then open resulting POV file with POVRay and render the scene. Scene contains enough basic stuff (globals, light, camera) to be rendered successfully right after exporting without any editing.
 
 *Example:* Simple black and white drawing, with blurs to simulate bevels etc., after converting using img2mesh.02.004.py and rendering using POVRay.
+
 ![Rendering example.](ycoin.png)
