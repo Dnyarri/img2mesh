@@ -4,8 +4,9 @@
 # 001 - generates globals and mesh only
 # 002 - added the rest of the scene (camera, light), mesh scaled to fit 1, 1, 1 cube and centered at 0, 0, 0, texture added
 # 003 - squares folding according to gradient, made mesh smoother
-# 004 - minor internal cleanup, project moved to
+# 004 - minor internal cleanup, project mirrored at:
 #       https://github.com/Dnyarri/img2mesh
+#       https://gitflic.ru/project/dnyarri/img2mesh
 
 import time
 from PIL import Image

@@ -6,8 +6,9 @@
 # 003 - Restructured output for easy reading, everything but globals and includes now at the end of scene.
 #       Extended camera description.
 # 004 - Bug with positioning found and seem to be fixed.
-#       Project moved to
+#       Project mirrored at:
 #       https://github.com/Dnyarri/img2mesh
+#       https://gitflic.ru/project/dnyarri/img2mesh
 
 import time
 from PIL import Image

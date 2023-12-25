@@ -7,12 +7,14 @@
 #       Extended camera description.
 # 004 - Bug with positioning found and seem to be fixed.
 #
-#       Project moved to
+#       Project moved to:
 #       https://github.com/Dnyarri/img2mesh
 #
 # 005 - Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng
 #       Support for 16 bit/channel PNGs added.
-
+#
+#       Project mirrored at:
+#       https://gitflic.ru/project/dnyarri/img2mesh
 
 import time
 import png
