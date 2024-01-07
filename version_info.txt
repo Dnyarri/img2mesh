@@ -28,16 +28,16 @@ VSVersionInfo(
     StringFileInfo(
       [
       StringTable(
-        '040904E4',
-        [StringStruct('CompanyName', 'AmphiSoft'),
-        StringStruct('FileDescription', 'Img2Mesh'),
-        StringStruct('FileVersion', '2.5.1'),
-        StringStruct('InternalName', 'img2mesh'),
-        StringStruct('LegalCopyright', 'Copyright© 2007 - 2024 Ilya Razmanov (ilyarazmanov@gmail.com).'),
-        StringStruct('ProductName', 'AmphiSoft Img2mesh'),
-        StringStruct('ProductVersion', '2.5.1'),
-        StringStruct('OriginalFilename', 'img2mesh.exe'),
-        StringStruct('Comments', 'Visit https://github.com/Dnyarri for more')])
+        "040904E4",
+        [StringStruct("CompanyName", "AmphiSoft"),
+        StringStruct("FileDescription", "Img2Mesh"),
+        StringStruct("FileVersion", "2.5.1"),
+        StringStruct("InternalName", "img2mesh"),
+        StringStruct("LegalCopyright", "(c) 2007 - 2024 Ilya Razmanov (ilyarazmanov@gmail.com)."),
+        StringStruct("ProductName", "AmphiSoft Img2mesh"),
+        StringStruct("ProductVersion", "2.5.1"),
+        StringStruct("OriginalFilename", "img2mesh.exe"),
+        StringStruct("Comments", "More programs at https://github.com/Dnyarri.")])
       ])
   ]
 )
