@@ -12,7 +12,7 @@ Python utilities for conversion of bitmap heightfield (in [PNG format](http://ww
 
 - **img2mesh.02.005** - major internal change. Input module changed from Pillow to [PyPNG](https://gitlab.com/drj11/pypng) thus allowing 16 bpc PNG files to be processed, generating meshes with higher z-resolution.
 
-- **img2mesh.02.006** - moderate internal changes; **Windows img2mesh.exe** file generated and added to 2.6 release.
+- **img2mesh.02.007** - moderate internal changes; **Windows img2mesh.exe** file generated and added to 2.6.1 release.
 
 *Dependencies:* Tkinter, PyPNG / Pillow
 
