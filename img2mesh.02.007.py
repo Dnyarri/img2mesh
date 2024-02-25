@@ -1,25 +1,58 @@
-# Program for conversion of image heightfield to triangle mesh
-# (c) Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
-# History:
-# 001 - Abandoned img2mesh and turned to img2mesh2 with completely different mesh structure.
-# 002 - Added mesh encapsulation with cubic box to provide solid walls and bottom.
-# 003 - Restructured output for easy reading, everything but globals and includes now at the end of scene.
-#       Extended camera description.
-# 004 - Bug with positioning found and seem to be fixed.
-# 005 - Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng
-#       Support for 16 bit/channel PNGs added.
-# 006 - Minor output cleanup and generalization
-# 007 - Attempt to reduce import
-#
-#       Project mirrored at:
-#       https://github.com/Dnyarri/img2mesh
-#       https://gitflic.ru/project/dnyarri/img2mesh
-#
+#!/usr/bin/env python
 
-from png import Reader  # I/O with PyPNG from: https://gitlab.com/drj11/pypng
+'''
+IMG2MESH - Program for conversion of image heightfield to triangle mesh in POVRay format
+-----------------------------------------------------------------------------------------
+
+Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
+            aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+History:
+001     Abandoned img2mesh and turned to img2mesh2 with completely different mesh structure.
+002     Added mesh encapsulation with cubic box to provide solid walls and bottom.
+003     Restructured output for easy reading, everything but globals and includes now at the end of scene.
+        Extended camera description.
+004     Bug with positioning found and seem to be fixed.
+005     Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng
+        Support for 16 bit/channel PNGs added.
+006     Minor output cleanup and generalization.
+
+007     GUI improved to show progress during long processing. Attempt to reduce import.
+
+        Project mirrored at:
+        https://github.com/Dnyarri/img2mesh
+        https://gitflic.ru/project/dnyarri/img2mesh
+
+'''
+
+__author__ = "Ilya Razmanov"
+__copyright__ = "(c) 2023-2004 Ilya Razmanov"
+__credits__ = "Ilya Razmanov"
+__license__ = "unlicense"
+__version__ = "2.7"
+__maintainer__ = "Ilya Razmanov"
+__email__ = "ilyarazmanov@gmail.com"
+__status__ = "Production"
+
+from tkinter import Tk
+from tkinter import Label
 from tkinter import filedialog
 from time import time
 from time import ctime
+
+from png import Reader      # I/O with PyPNG from: https://gitlab.com/drj11/pypng
+
+# --------------------------------------------------------------
+# Creating dialog
+
+sortir = Tk()
+sortir.title('PNG to POV conversion')
+sortir.geometry('+100+100')
+zanyato = Label(sortir, text = 'Starting...', font=("arial", 14), padx=16, pady=10, justify='center')
+zanyato.pack()
+sortir.withdraw()
+
+# Main dialog created and hidden
+# --------------------------------------------------------------
 
 # Open source image
 sourcefilename = filedialog.askopenfilename(title='Open source PNG file', filetypes=[('PNG','.png')], defaultextension = ('PNG','.png'))
@@ -54,8 +87,10 @@ if (resultfile == ''):
 # Image should be opened as "imagedata" by main program before
 # Note that X, Y, Z are not determined in function, you have to determine it in main program
 
-def src(x, y, z):  # Analog src from FM, force repeate edge instead of out of range
-
+def src(x, y, z):
+    '''
+    Analog src from FM, force repeate edge instead of out of range
+    '''
     cx = x; cy = y
     cx = max(0,cx); cx = min((X-1),cx)
     cy = max(0,cy); cy = min((Y-1),cy)
@@ -66,8 +101,10 @@ def src(x, y, z):  # Analog src from FM, force repeate edge instead of out of ra
     return channelvalue
 # end of src function
 
-def srcY(x, y):  # Converting to greyscale, returns Y, force repeate edge instead of out of range
-
+def srcY(x, y):
+    '''
+    Converting to greyscale, returns Yntensity, force repeate edge instead of out of range
+    '''
     cx = x; cy = y
     cx = max(0,cx); cx = min((X-1),cx)
     cy = max(0,cy); cy = min((Y-1),cy)
@@ -120,6 +157,12 @@ resultfile.write('#declare thething = mesh {\n')  # Opening mesh object "thethin
 
 for y in range(0, Y, 1):
 
+    message = ('Processing row ' + str(y) +' of ' + str(Y) + '...')
+    sortir.deiconify()
+    zanyato.config(text = message)
+    sortir.update()
+    sortir.update_idletasks()
+
     resultfile.write(f'\n\n // Row {y}\n')
 
     for x in range(0, X, 1):
@@ -133,26 +176,26 @@ for y in range(0, Y, 1):
         # going to pyramid building
 
         resultfile.write('\n    triangle {')    # Opening triangle 2
-        resultfile.write(f'<{(x-0.5)}, {(y-0.5)}, {v1}>')
-        resultfile.write(f'<{(x+0.5)}, {(y-0.5)}, {v3}>')
+        resultfile.write(f'<{(x-0.5)}, {(y-0.5)}, {v1}> ')
+        resultfile.write(f'<{(x+0.5)}, {(y-0.5)}, {v3}> ')
         resultfile.write(f'<{x}, {y}, {v9}>')
         resultfile.write('}')             # Closing triangle 2
 
         resultfile.write('\n    triangle {')    # Opening triangle 4
-        resultfile.write(f'<{(x+0.5)}, {(y-0.5)}, {v3}>')
-        resultfile.write(f'<{(x+0.5)}, {(y+0.5)}, {v5}>')
+        resultfile.write(f'<{(x+0.5)}, {(y-0.5)}, {v3}> ')
+        resultfile.write(f'<{(x+0.5)}, {(y+0.5)}, {v5}> ')
         resultfile.write(f'<{x}, {y}, {v9}>')
         resultfile.write('}')             # Closing triangle 4
 
         resultfile.write('\n    triangle {')    # Opening triangle 6
-        resultfile.write(f'<{(x+0.5)}, {(y+0.5)}, {v5}>')
-        resultfile.write(f'<{(x-0.5)}, {(y+0.5)}, {v7}>')
+        resultfile.write(f'<{(x+0.5)}, {(y+0.5)}, {v5}> ')
+        resultfile.write(f'<{(x-0.5)}, {(y+0.5)}, {v7}> ')
         resultfile.write(f'<{x}, {y}, {v9}>')
         resultfile.write('}')             # Closing triangle 6
 
         resultfile.write('\n    triangle {')    # Opening triangle 8
-        resultfile.write(f'<{(x-0.5)}, {(y+0.5)}, {v7}>')
-        resultfile.write(f'<{(x-0.5)}, {(y-0.5)}, {v1}>')
+        resultfile.write(f'<{(x-0.5)}, {(y+0.5)}, {v7}> ')
+        resultfile.write(f'<{(x-0.5)}, {(y-0.5)}, {v1}> ')
         resultfile.write(f'<{x}, {y}, {v9}>')
         resultfile.write('}')             # Closing triangle 8
 
@@ -190,3 +233,12 @@ resultfile.write('light_source {0*x\n   color rgb <1,1,1>\n   translate <20, 20,
 resultfile.write('\n/*\n\nhappy rendering\n\n  0~0\n (---)\n(.>|<.)\n-------\n\n*/')
 # Close output
 resultfile.close()
+
+# --------------------------------------------------------------
+# Destroying dialog
+
+sortir.destroy()
+sortir.mainloop()
+
+# Dialog destroyed and closed
+# --------------------------------------------------------------
