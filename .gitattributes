@@ -1,2 +1,3 @@
 .git* export-ignore
 old_versions/** export-ignore
+old_versions export-ignore
