@@ -34,8 +34,6 @@ __status__ = "Development"
 from tkinter import Tk
 from tkinter import Label
 from tkinter import filedialog
-from time import time
-from time import ctime
 
 from png import Reader  # I/O with PyPNG from: https://gitlab.com/drj11/pypng
 
