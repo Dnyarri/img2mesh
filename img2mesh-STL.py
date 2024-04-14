@@ -26,7 +26,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "0.1.0.4"
+__version__ = "0.1.0.5"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Development"
@@ -143,9 +143,9 @@ xOffset = 1.0  # To be added BEFORE rescaling to compensate 0.5 X expansion
 yOffset = 1.0  # To be added BEFORE rescaling to compensate 0.5 Y expansion
 zOffset = 0.0  # To be added AFTER rescaling just in case there should be something to fix
 
-xRescale = 1.0 / (max(X, Y))
-yRescale = 1.0 / (max(X, Y))
-zRescale = 1.0 / maxcolors
+xRescale = 1.0 / float(max(X, Y))    # To fit object into 1,1,1 cube
+yRescale = xRescale
+zRescale = 1.0 / float(maxcolors)
 
 # 	WRITING STL FILE, finally
 
@@ -174,44 +174,44 @@ for y in range(0, Y, 1):
         yWrite = y
 
         v9 = srcY(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
-        v1 = 0.25 * (v9 + srcY((xRead - 1), yRead) + srcY((xRead - 1), (yRead + 1)) + srcY(xRead, (yRead + 1)))  # По улитке 8-1-2
-        v3 = 0.25 * (v9 + srcY(xRead, (yRead + 1)) + srcY((xRead + 1), (yRead + 1)) + srcY((xRead + 1), yRead))  # По улитке 2-3-4
-        v5 = 0.25 * (v9 + srcY((xRead + 1), yRead) + srcY((xRead + 1), (yRead - 1)) + srcY(xRead, (yRead - 1)))  # По улитке 4-5-6
-        v7 = 0.25 * (v9 + srcY(xRead, (yRead - 1)) + srcY((xRead - 1), (yRead - 1)) + srcY((xRead - 1), yRead))  # По улитке 6-7-8
+        v1 = 0.25 * (v9 + srcY((xRead - 1), yRead) + srcY((xRead - 1), (yRead + 1)) + srcY(xRead, (yRead + 1)))
+        v3 = 0.25 * (v9 + srcY(xRead, (yRead + 1)) + srcY((xRead + 1), (yRead + 1)) + srcY((xRead + 1), yRead))
+        v5 = 0.25 * (v9 + srcY((xRead + 1), yRead) + srcY((xRead + 1), (yRead - 1)) + srcY(xRead, (yRead - 1)))
+        v7 = 0.25 * (v9 + srcY(xRead, (yRead - 1)) + srcY((xRead - 1), (yRead - 1)) + srcY((xRead - 1), yRead))
 
         # finally going to pyramid building
 
         # top part begins
         resultfile.writelines(
             [
-                f'   facet normal 0 0 1\n',  # triangle 2 normal up
-                f'       outer loop\n',  # 1 - 9 - 3
+                '   facet normal 0 0 1\n',  # triangle 2 normal up
+                '       outer loop\n',  # 1 - 9 - 3
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v1):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+zRescale*v9):e}\n',
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v3):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
-                f'   facet normal 0 0 1\n',  # triangle 4 normal up
-                f'       outer loop\n',  # 3 - 9 - 5
+                '       endloop\n',
+                '   endfacet\n',
+                '   facet normal 0 0 1\n',  # triangle 4 normal up
+                '       outer loop\n',  # 3 - 9 - 5
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v3):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+zRescale*v9):e}\n',
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v5):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
-                f'   facet normal 0 0 1\n',  # triangle 6 normal up
-                f'       outer loop\n',  # 5 - 9 - 7
+                '       endloop\n',
+                '   endfacet\n',
+                '   facet normal 0 0 1\n',  # triangle 6 normal up
+                '       outer loop\n',  # 5 - 9 - 7
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v5):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+zRescale*v9):e}\n',
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v7):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
-                f'   facet normal 0 0 1\n',  # triangle 8 normal up
-                f'       outer loop\n',  # 7 - 9 - 1
+                '       endloop\n',
+                '   endfacet\n',
+                '   facet normal 0 0 1\n',  # triangle 8 normal up
+                '       outer loop\n',  # 7 - 9 - 1
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v7):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+zRescale*v9):e}\n',
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v1):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
+                '       endloop\n',
+                '   endfacet\n',
             ]
         )
         # top part ends
@@ -220,20 +220,20 @@ for y in range(0, Y, 1):
         if x == 0:
             resultfile.writelines(
                 [
-                    f'   facet normal -1 0 0\n',  # triangle 8- normal left
-                    f'       outer loop\n',  # 1 - down1 - 7
+                    '   facet normal -1 0 0\n',  # triangle 8- normal left
+                    '       outer loop\n',  # 1 - down1 - 7
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v1):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v7):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
-                    f'   facet normal -1 0 0\n',  # triangle 8- normal left
-                    f'       outer loop\n',  # down1 - down7 - 7
+                    '       endloop\n',
+                    '   endfacet\n',
+                    '   facet normal -1 0 0\n',  # triangle 8- normal left
+                    '       outer loop\n',  # down1 - down7 - 7
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v7):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
+                    '       endloop\n',
+                    '   endfacet\n',
                 ]
             )
         # left side ends
@@ -242,20 +242,20 @@ for y in range(0, Y, 1):
         if x == (X - 1):
             resultfile.writelines(
                 [
-                    f'   facet normal 1 0 0\n',  # triangle 4+ normal left
-                    f'       outer loop\n',  # 5 - down5 - 3
+                    '   facet normal 1 0 0\n',  # triangle 4+ normal left
+                    '       outer loop\n',  # 5 - down5 - 3
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v5):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v3):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
-                    f'   facet normal 1 0 0\n',  # triangle 4+ normal left
-                    f'       outer loop\n',  # 3 - down5 - down3
+                    '       endloop\n',
+                    '   endfacet\n',
+                    '   facet normal 1 0 0\n',  # triangle 4+ normal left
+                    '       outer loop\n',  # 3 - down5 - down3
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v3):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
+                    '       endloop\n',
+                    '   endfacet\n',
                 ]
             )
         # right side ends
@@ -264,20 +264,20 @@ for y in range(0, Y, 1):
         if y == 0:
             resultfile.writelines(
                 [
-                    f'   facet normal 0 -1 0\n',  # triangle 2- normal far
-                    f'       outer loop\n',  # 3 - down - 1
+                    '   facet normal 0 -1 0\n',  # triangle 2- normal far
+                    '       outer loop\n',  # 3 - down - 1
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v3):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v1):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
-                    f'   facet normal 0 -1 0\n',  # triangle 2- normal far
-                    f'       outer loop\n',  # down - down - 1
+                    '       endloop\n',
+                    '   endfacet\n',
+                    '   facet normal 0 -1 0\n',  # triangle 2- normal far
+                    '       outer loop\n',  # down - down - 1
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+zRescale*v1):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
+                    '       endloop\n',
+                    '   endfacet\n',
                 ]
             )
         # far side ends
@@ -286,20 +286,20 @@ for y in range(0, Y, 1):
         if y == (Y - 1):
             resultfile.writelines(
                 [
-                    f'   facet normal 0 1 0\n',  # triangle 6+ normal close
-                    f'       outer loop\n',  # 7 - down - 5
+                    '   facet normal 0 1 0\n',  # triangle 6+ normal close
+                    '       outer loop\n',  # 7 - down - 5
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v7):e}\n',
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v5):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
-                    f'   facet normal 0 1 0\n',  # triangle 6+ normal close
-                    f'       outer loop\n',  # down - down - 5
+                    '       endloop\n',
+                    '   endfacet\n',
+                    '   facet normal 0 1 0\n',  # triangle 6+ normal close
+                    '       outer loop\n',  # down - down - 5
                     f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                     f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+zRescale*v5):e}\n',
-                    f'       endloop\n',
-                    f'   endfacet\n',
+                    '       endloop\n',
+                    '   endfacet\n',
                 ]
             )
         # close side ends
@@ -307,34 +307,34 @@ for y in range(0, Y, 1):
         # bottom part begins
         resultfile.writelines(
             [
-                f'   facet normal 0 0 -1\n',  # triangle 2 normal up
-                f'       outer loop\n',  # 1 - 9 - 3
+                '   facet normal 0 0 -1\n',  # triangle 2 normal up
+                '       outer loop\n',  # 1 - 9 - 3
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
-                f'   facet normal 0 0 -1\n',  # triangle 4 normal up
-                f'       outer loop\n',  # 3 - 9 - 5
+                '       endloop\n',
+                '   endfacet\n',
+                '   facet normal 0 0 -1\n',  # triangle 4 normal up
+                '       outer loop\n',  # 3 - 9 - 5
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
-                f'   facet normal 0 0 -1\n',  # triangle 6 normal up
-                f'       outer loop\n',  # 5 - 9 - 7
+                '       endloop\n',
+                '   endfacet\n',
+                '   facet normal 0 0 -1\n',  # triangle 6 normal up
+                '       outer loop\n',  # 5 - 9 - 7
                 f'           vertex {(xRescale*(xWrite+0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
-                f'   facet normal 0 0 -1\n',  # triangle 8 normal up
-                f'       outer loop\n',  # 7 - 9 - 1
+                '       endloop\n',
+                '   endfacet\n',
+                '   facet normal 0 0 -1\n',  # triangle 8 normal up
+                '       outer loop\n',  # 7 - 9 - 1
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite+0.5+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite+xOffset)):e} {(yRescale*(yWrite+yOffset)):e} {(zOffset+0.0):e}\n',
                 f'           vertex {(xRescale*(xWrite-0.5+xOffset)):e} {(yRescale*(yWrite-0.5+yOffset)):e} {(zOffset+0.0):e}\n',
-                f'       endloop\n',
-                f'   endfacet\n',
+                '       endloop\n',
+                '   endfacet\n',
             ]
         )
         # bottom part ends
