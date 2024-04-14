@@ -7,7 +7,7 @@ IMG2MESH OBJ - Program for conversion of image heightfield to triangle mesh in O
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
             aka Ilyich the Toad (mailto:amphisoft@gmail.com)
 History:
-0.1.0.0 Just started.
+1.0.0.0 Initial production release
 
         Main site:
         https://dnyarri.github.io
@@ -22,23 +22,31 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "0.1.0.0"
+__version__ = "1.0.0.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
-__status__ = "Development"
+__status__ = "Production"
 
 from tkinter import Tk
 from tkinter import Label
 from tkinter import filedialog
+
+from pathlib import Path
 
 from png import Reader  # I/O with PyPNG from: https://gitlab.com/drj11/pypng
 
 # --------------------------------------------------------------
 # Creating dialog
 
+iconpath = Path(__file__).resolve().parent / 'g.ico'
+iconname = str(iconpath)
+useicon = iconpath.exists()     # Check if icon file really exist. If False, it will not be used later.
+
 sortir = Tk()
 sortir.title('PNG to OBJ conversion')
-sortir.geometry('+100+100')
+if useicon:
+    sortir.iconbitmap(iconname) # Replacement for simple sortir.iconbitmap('name.ico') - ugly but stable.
+sortir.geometry('+200+100')
 zanyato = Label(sortir, text='Allons-y!', font=("arial", 14), padx=16, pady=10, justify='center')
 zanyato.pack()
 sortir.withdraw()
