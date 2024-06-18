@@ -21,7 +21,7 @@ History:
 2.8.2.1 Internal brightness map transfer function added.
         Finally it can be adjusted nondestructively within POVRay
         instead of re-editing in Photoshop or GIMP and re-exporting every time.
-2.8.2.2 Restructuring output, redefining textures, piecewise map example added.
+2.8.2.4 Restructuring output, redefining textures, piecewise map example added, spline example added.
 
         Main site:
         https://dnyarri.github.io
@@ -36,7 +36,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2023-2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "2.8.2.3"
+__version__ = "2.8.2.4"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
@@ -212,16 +212,24 @@ def img2pov():
             '#include "metals.inc"\n',
             '#include "golds.inc"\n\n',
             '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP Curves applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh in POVRay. */\n\n',
-            '#declare scl = function(c, lin, hin, lout, hout)\n  {(c-lin)/(hin-lin) * (hout-lout) + lout}  // Linear rescale function from lin..hin to lout..hout range\n\n',
+            '#declare scl = function(c, lin, hin, lout, hout) {\n    (c-lin)/(hin-lin) * (hout-lout) + lout\n  }  // Linear rescale function from lin..hin to lout..hout range\n\n',
             '#declare map_1 = function(c) {c}               // Direct input\n',
             '#declare map_2 = function(c) {1.0 - c}         // Negative input\n',
             '#declare map_3 = function(c) {pow(c,(1/1.5))}  // Gamma 1.5\n',
+            '\n//    Below are two examples of similar piecewise function\n',
             '#declare map_4 = function(c) {      // Piecewise rescaling example start\n',
             '  (c <= 0.7) * scl(c, 0, 0.7, 0,1)  // rescale 0-0.7 to 0-1\n',
             '  + (c > 0.7 & c <= 0.9) * scl(c, 0.7, 0.9, 1, 0.5)  // rescale 0.7-0.9 to 1-0.5\n',
             '  + (c > 0.9) * scl(c, 0.9, 1, 0.5, 1)  // rescale 0.9-1 to 0.5-1\n',
-            '  }  // Piecewise example end\n',
-            '\n//    Select map from the list above\n',
+            '  }  // Piecewise example end\n\n',
+            '#declare interpol = function {  // Spline interpolation example start\n',
+            '  spline { linear_spline\n',
+            '    0.0, <0.0, 0, 0>\n',
+            '    0.7, <1.0, 0, 0>\n',
+            '    0.9, <0.5, 0, 0>\n',
+            '    1.0, <1.0, 0, 0>}\n  }  // Spline building end\n',
+            '#declare map_5 = function(c) {interpol(c).u}  // Spline map end\n',
+            '\n//    Select map from map_n list above\n',
             '#declare map = function(c) {map_1(c)}\n',
         ]
     )
