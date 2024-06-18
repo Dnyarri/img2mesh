@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 '''
 IMG2MESH - Program for conversion of image heightfield to triangle mesh in different formats
 ---------------------------------------------------------------------------------------------
@@ -98,4 +99,4 @@ stopper.mainloop()
 # --------------------------------------------------------------
 
 if DyeDye:
-    quit()  # Kill program if "Quit" was pressed in stopper
+    quit()  # Kill program if "Exit" was pressed in stopper

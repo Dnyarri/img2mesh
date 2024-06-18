@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''
 IMG2OBJ - Program for conversion of image heightfield to triangle mesh in OBJ format
@@ -28,9 +28,7 @@ __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
 
-from tkinter import Tk
-from tkinter import Label
-from tkinter import filedialog
+from tkinter import Tk, Label, filedialog
 
 from pathlib import Path
 
@@ -56,7 +54,7 @@ def img2obj():
     if useicon:
         sortir.iconbitmap(iconname) # Replacement for simple sortir.iconbitmap('name.ico') - ugly but stable.
     sortir.geometry('+200+100')
-    zanyato = Label(sortir, text='Allons-y!', font=("arial", 14), padx=16, pady=10, justify='center')
+    zanyato = Label(sortir, text='Allons-y!', font=('Courier', 14), padx=16, pady=10, justify='center')
     zanyato.pack()
     sortir.withdraw()
 
@@ -100,7 +98,7 @@ def img2obj():
         defaultextension=('Wavefront OBJ file', '.obj'),
     )
 
-    if (resultfilename == '') or (sourcefilename == None):
+    if (resultfilename == '') or (resultfilename == None):
         return None
         # break if user press 'Cancel'
     # return doesn't seem to work well with .asksaveasfile
@@ -178,7 +176,7 @@ def img2obj():
 
     for y in range(0, Y, 1):
 
-        message = 'Processing row ' + str(y) + ' of ' + str(Y) + '...'
+        message = f'Processing row {str(y)} of {str(Y)}...'
         sortir.deiconify()
         zanyato.config(text=message)
         sortir.update()
