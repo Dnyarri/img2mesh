@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''
 IMG2POV - Program for conversion of image heightfield to triangle mesh in POVRay format
@@ -6,13 +6,12 @@ IMG2POV - Program for conversion of image heightfield to triangle mesh in POVRay
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
             aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+
 History:
 
 001     Abandoned img2mesh v.1 and turned to img2mesh v.2 with completely different mesh structure.
 005     Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng
         Support for 16 bit/channel PNGs added. Added mesh encapsulation box.
-        Extended POVRay camera description.
-        Restructured output for easy reading.
 007     Output cleanup and generalization. GUI improved to show progress during long processing.
         Reducing unnecessary import.
 2.7.1.0 Significant code cleanup with .writelines. Versioning more clear.
@@ -21,7 +20,8 @@ History:
 2.8.2.1 Internal brightness map transfer function added.
         Finally it can be adjusted nondestructively within POVRay
         instead of re-editing in Photoshop or GIMP and re-exporting every time.
-2.8.2.4 Restructuring output, redefining textures, piecewise map example added, spline example added.
+2.8.2.3 Restructuring output, redefining textures, piecewise map template added.
+2.8.2.5 Arbitrary decision to replace all maps with one arbitrary spline.
 
         Main site:
         https://dnyarri.github.io
@@ -36,7 +36,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2023-2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "2.8.2.4"
+__version__ = "2.8.2.5"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
@@ -211,26 +211,15 @@ def img2pov():
             '#include "finish.inc"\n',
             '#include "metals.inc"\n',
             '#include "golds.inc"\n\n',
-            '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP Curves applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh in POVRay. */\n\n',
-            '#declare scl = function(c, lin, hin, lout, hout) {\n    (c-lin)/(hin-lin) * (hout-lout) + lout\n  }  // Linear rescale function from lin..hin to lout..hout range\n\n',
-            '#declare map_1 = function(c) {c}               // Direct input\n',
-            '#declare map_2 = function(c) {1.0 - c}         // Negative input\n',
-            '#declare map_3 = function(c) {pow(c,(1/1.5))}  // Gamma 1.5\n',
-            '\n//    Below are two examples of similar piecewise function\n',
-            '#declare map_4 = function(c) {      // Piecewise rescaling example start\n',
-            '  (c <= 0.7) * scl(c, 0, 0.7, 0,1)  // rescale 0-0.7 to 0-1\n',
-            '  + (c > 0.7 & c <= 0.9) * scl(c, 0.7, 0.9, 1, 0.5)  // rescale 0.7-0.9 to 1-0.5\n',
-            '  + (c > 0.9) * scl(c, 0.9, 1, 0.5, 1)  // rescale 0.9-1 to 0.5-1\n',
-            '  }  // Piecewise example end\n\n',
-            '#declare interpol = function {  // Spline interpolation example start\n',
+            '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP "Curves" applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh within POVRay.\nBy default exported map is five points linear spline, corresponding to straight line\ndescribing "identical" transform, i.e. no map adjustment (input=output).\nYou can both edit existing control points and add new ones. Note that points order is irrelevant\nsince POVRay will resort vectors according to entry value (first digits in the row before comma),\nso you can add middle points at the end of the list below or write the whole list upside down. */\n\n',
+            '#declare Curve = function {  // Spline curve construction begins\n',
             '  spline { linear_spline\n',
-            '    0.0, <0.0, 0, 0>\n',
-            '    0.7, <1.0, 0, 0>\n',
-            '    0.9, <0.5, 0, 0>\n',
-            '    1.0, <1.0, 0, 0>}\n  }  // Spline building end\n',
-            '#declare map_5 = function(c) {interpol(c).u}  // Spline map end\n',
-            '\n//    Select map from map_n list above\n',
-            '#declare map = function(c) {map_1(c)}\n',
+            '    0.0,   <0.0,   0>\n',
+            '    0.25,  <0.25,  0>\n',
+            '    0.5,   <0.5,   0>\n',
+            '    0.75,  <0.75,  0>\n',
+            '    1.0,   <1.0,   0>}\n  }  // Construction complete\n',
+            '#declare map = function(c) {Curve(c).u}  // Spline curve assigned as map\n',
         ]
     )
 
@@ -360,10 +349,10 @@ def img2pov():
             '}',
             '//    Constructed CGS "boxedthing" of mesh plus bounding box thus adding side walls and bottom\n\n',
             'object{boxedthing}\n\n',
+            '\n/*\n\nhappy rendering\n\n  0~0\n (---)\n(.>|<.)\n-------\n\n*/',
         ]
     )  # Closing solids
 
-    resultfile.write('\n/*\n\nhappy rendering\n\n  0~0\n (---)\n(.>|<.)\n-------\n\n*/')
     # Close output
     resultfile.close()
 
