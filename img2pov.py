@@ -20,7 +20,6 @@ History:
 2.8.2.1 Internal brightness map transfer function added.
         Finally it can be adjusted nondestructively within POVRay
         instead of re-editing in Photoshop or GIMP and re-exporting every time.
-2.8.2.3 Restructuring output, redefining textures, piecewise map template added.
 2.8.2.5 Arbitrary decision to replace all maps with one arbitrary spline.
 
         Main site:
@@ -227,14 +226,16 @@ def img2pov():
     proportions = max(X, Y) / X
     resultfile.writelines(
         [
-            '\n//  Camera and light\n',
-            '#declare camera_height = 3.0;\n',
+            '\n//  Camera and light\n\n',
+            '#declare camera_position = <0.0, 0.0, 3.0>;  // Camera position over object, used for view angle\n\n',
             'camera{\n',
             '//    orthographic\n',
-            '    location <0.0, 0.0, camera_height>\n',
-            '    right x*image_width/image_height\n' '    up y\n' '    direction <0, 0, 1>\n',
-            f'    angle 2.0*(degrees(atan2({0.5 * proportions}, camera_height-1.0)))    // Supposed to fit object\n',
-            '    look_at <0.0, 0.0, 0.0>\n}\n\n',
+            '    location camera_position\n',
+            '    right x*image_width/image_height\n',
+            '    up y\n',
+            '    direction <0, 0, 1>\n',
+            f'    angle 2.0*(degrees(atan2({0.5 * proportions}, vlength(camera_position - <0.0, 0.0, 1.0>))))    // Supposed to fit object\n',
+            '    look_at <0.0, 0.0, 0.5>\n}\n\n',
             'light_source{0*x\n    color rgb <1.0, 1.0, 1.0>\n    translate <20, 20, 20>\n}\n',
             '\n//  Layered thething texture\n',
             '#declare thething_texture_bottom =\n',
