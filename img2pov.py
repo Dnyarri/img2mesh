@@ -21,6 +21,8 @@ History:
         Finally it can be adjusted nondestructively within POVRay
         instead of re-editing in Photoshop or GIMP and re-exporting every time.
 2.8.2.5 Arbitrary decision to replace all maps with one arbitrary spline.
+2.8.3.0 Everything rewritten to fully match Photoshop coordinate system.
+        Important changes in camera, handle with care!
 
         Main site:
         https://dnyarri.github.io
@@ -35,7 +37,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2023-2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "2.8.2.5"
+__version__ = "2.8.3.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
@@ -68,7 +70,7 @@ def img2pov():
     if useicon:
         sortir.iconbitmap(iconname)  # Replacement for simple sortir.iconbitmap('name.ico') - ugly but stable.
     sortir.geometry('+200+100')
-    zanyato = Label(sortir, text='Starting...', font=('Courier', 14), padx=16, pady=10, justify='center')
+    zanyato = Label(sortir, text='Starting...', font=('Courier', 12), padx=16, pady=10, justify='left')
     zanyato.pack()
     sortir.withdraw()
 
@@ -210,7 +212,7 @@ def img2pov():
             '#include "finish.inc"\n',
             '#include "metals.inc"\n',
             '#include "golds.inc"\n\n',
-            '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP "Curves" applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh within POVRay.\nBy default exported map is five points linear spline, corresponding to straight line\ndescribing "identical" transform, i.e. no map adjustment (input=output).\nYou can both edit existing control points and add new ones. Note that points order is irrelevant\nsince POVRay will resort vectors according to entry value (first digits in the row before comma),\nso you can add middle points at the end of the list below or write the whole list upside down. */\n\n',
+            '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP "Curves" applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh within POVRay.\nBy default exported map is five points linear spline, corresponding to straight line\ndescribing "identical" transform, i.e. input = output.\nYou can both edit existing control points and add new ones. Note that points order is irrelevant\nsince POVRay will resort vectors according to entry value (first digits in the row before comma),\nso you can add middle points at the end of the list below or write the whole list upside down. */\n\n',
             '#declare Curve = function {  // Spline curve construction begins\n',
             '  spline { linear_spline\n',
             '    0.0,   <0.0,   0>\n',
@@ -226,17 +228,21 @@ def img2pov():
     proportions = max(X, Y) / X
     resultfile.writelines(
         [
-            '\n//  Camera and light\n\n',
-            '#declare camera_position = <0.0, 0.0, 3.0>;  // Camera position over object, used for view angle\n\n',
-            'camera{\n',
-            '//    orthographic\n',
-            '    location camera_position\n',
-            '    right x*image_width/image_height\n',
-            '    up y\n',
-            '    direction <0, 0, 1>\n',
-            f'    angle 2.0*(degrees(atan2({0.5 * proportions}, vlength(camera_position - <0.0, 0.0, 1.0>))))    // Supposed to fit object\n',
-            '    look_at <0.0, 0.0, 0.5>\n}\n\n',
-            'light_source{0*x\n    color rgb <1.0, 1.0, 1.0>\n    translate <20, 20, 20>\n}\n',
+            '\n/*  Camera\n\n',
+            'Coordinate system for the whole scene changed to match Photoshop\n',
+            'Origin is top left, z points at you */\n\n',
+            '#declare camera_position = <0.0, 0.0, 3.0>;  // Camera position over object, used for angle\n\n',
+            'camera {\n',
+            '  // orthographic\n',
+            '  location camera_position\n',
+            '  right x*image_width/image_height\n',
+            '  up y\n',
+            '  sky <0, -1, 0>\n',
+            '  direction <0, 0, vlength(camera_position - <0.0, 0.0, 1.0>)>  // May alone work for many objects. Otherwise fiddle with angle below\n',
+            f'//  angle 2.0*(degrees(atan2({0.5 * max(X,Y)/X}, vlength(camera_position - <0.0, 0.0, 1.0>)))) // Supposed to fit object\n',
+            '  look_at<0.0, 0.0, 0.5>\n',
+            '}\n\n',
+            'light_source {0*x\n    color rgb <1.0, 1.0, 1.0>\n    translate <-5, -5, 5>\n}\n',
             '\n//  Layered thething texture\n',
             '#declare thething_texture_bottom =\n',
             '    texture {\n',
@@ -277,7 +283,6 @@ def img2pov():
 
     xOffset = -0.5 * float(X - 1)  # To be added BEFORE rescaling to center object.
     yOffset = -0.5 * float(Y - 1)  # To be added BEFORE rescaling to center object
-    zOffset = 0.0
 
     xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
     yRescale = xRescale
@@ -299,57 +304,48 @@ def img2pov():
 
         for x in range(0, X, 1):
 
-            # Reading switch (flipping coordinate system to match Photoshop to POVRay):
-            xRead = X - 1 - x
-            yRead = Y - 1 - y
+            v9 = srcY(x, y)  # Current pixel to process and write. Then going to neighbours
+            v1 = 0.25 * (v9 + srcY(x-1, y-1) + srcY(x, y-1) + srcY(x-1, y))
+            v3 = 0.25 * (v9 + srcY(x, y-1) + srcY(x+1, y-1) + srcY(x+1, y))
+            v5 = 0.25 * (v9 + srcY(x+1, y) + srcY(x+1, y+1) + srcY(x, y+1))
+            v7 = 0.25 * (v9 + srcY(x, y+1) + srcY(x-1, y+1) + srcY(x-1, y))
 
-            # Last remains of writing switch. No longer used but var names remained active so dummy plug must be here.
-            xWrite = x
-            yWrite = y
-
-            v9 = srcY(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
-            v1 = 0.25 * (v9 + srcY((xRead + 1), yRead) + srcY((xRead + 1), (yRead + 1)) + srcY(xRead, (yRead + 1)))
-            v3 = 0.25 * (v9 + srcY(xRead, (yRead + 1)) + srcY((xRead - 1), (yRead + 1)) + srcY((xRead - 1), yRead))
-            v5 = 0.25 * (v9 + srcY((xRead - 1), yRead) + srcY((xRead - 1), (yRead - 1)) + srcY(xRead, (yRead - 1)))
-            v7 = 0.25 * (v9 + srcY(xRead, (yRead - 1)) + srcY((xRead + 1), (yRead - 1)) + srcY((xRead + 1), yRead))
-
-            # finally going to pyramid building
+            # finally going to build pyramid
 
             resultfile.write(
-                f'\n        triangle{{<{xRescale*(xWrite-0.5+xOffset)}, {yRescale*(yWrite-0.5+yOffset)}, map({zRescale*v1})> <{xRescale*(xWrite+xOffset)}, {yRescale*(yWrite+yOffset)}, map({zRescale*v9})> <{xRescale*(xWrite+0.5+xOffset)}, {yRescale*(yWrite-0.5+yOffset)}, map({zRescale*v3})>}}'
+                f'\n        triangle {{<{xRescale*(x-0.5+xOffset)}, {yRescale*(y-0.5+yOffset)}, map({zRescale*v1})> <{xRescale*(x+xOffset)}, {yRescale*(y+yOffset)}, map({zRescale*v9})> <{xRescale*(x+0.5+xOffset)}, {yRescale*(y-0.5+yOffset)}, map({zRescale*v3})>}}'
             )  # Triangle 2 1-9-3
 
             resultfile.write(
-                f'\n        triangle{{<{xRescale*(xWrite+0.5+xOffset)}, {yRescale*(yWrite-0.5+yOffset)}, map({zRescale*v3})> <{xRescale*(xWrite+xOffset)}, {yRescale*(yWrite+yOffset)}, map({zRescale*v9})> <{xRescale*(xWrite+0.5+xOffset)}, {yRescale*(yWrite+0.5+yOffset)}, map({zRescale*v5})>}}'
+                f'\n        triangle {{<{xRescale*(x+0.5+xOffset)}, {yRescale*(y-0.5+yOffset)}, map({zRescale*v3})> <{xRescale*(x+xOffset)}, {yRescale*(y+yOffset)}, map({zRescale*v9})> <{xRescale*(x+0.5+xOffset)}, {yRescale*(y+0.5+yOffset)}, map({zRescale*v5})>}}'
             )  # Triangle 4 3-9-5
 
             resultfile.write(
-                f'\n        triangle{{<{xRescale*(xWrite+0.5+xOffset)}, {yRescale*(yWrite+0.5+yOffset)}, map({zRescale*v5})> <{xRescale*(xWrite+xOffset)}, {yRescale*(yWrite+yOffset)}, map({zRescale*v9})> <{xRescale*(xWrite-0.5+xOffset)}, {yRescale*(yWrite+0.5+yOffset)}, map({zRescale*v7})>}}'
+                f'\n        triangle {{<{xRescale*(x+0.5+xOffset)}, {yRescale*(y+0.5+yOffset)}, map({zRescale*v5})> <{xRescale*(x+xOffset)}, {yRescale*(y+yOffset)}, map({zRescale*v9})> <{xRescale*(x-0.5+xOffset)}, {yRescale*(y+0.5+yOffset)}, map({zRescale*v7})>}}'
             )  # Triangle 6 5-9-7
 
             resultfile.write(
-                f'\n        triangle{{<{xRescale*(xWrite-0.5+xOffset)}, {yRescale*(yWrite+0.5+yOffset)}, map({zRescale*v7})> <{xRescale*(xWrite+xOffset)}, {yRescale*(yWrite+yOffset)}, map({zRescale*v9})> <{xRescale*(xWrite-0.5+xOffset)}, {yRescale*(yWrite-0.5+yOffset)}, map({zRescale*v1})>}}'
+                f'\n        triangle {{<{xRescale*(x-0.5+xOffset)}, {yRescale*(y+0.5+yOffset)}, map({zRescale*v7})> <{xRescale*(x+xOffset)}, {yRescale*(y+yOffset)}, map({zRescale*v9})> <{xRescale*(x-0.5+xOffset)}, {yRescale*(y-0.5+yOffset)}, map({zRescale*v1})>}}'
             )  # Triangle 8 7-9-1
 
-            # Pyramid completed. Ave me!
+        # Pyramid construction complete. Ave me!
 
-    resultfile.write('\n\n  inside_vector <0, 0, 1>\n\n')
-
-    # Sample texture of textures
     resultfile.writelines(
         [
-            '  texture {thething_texture}\n',
-            '}\n//    Closed thething\n\n',
-            '#declare boxedthing = object{\n',
-            '    intersection {\n',
+            '\n\n  inside_vector <0, 0, 1>\n\n',
+            '//  clipped_by {plane{-z, -0.01}}  // Variant of cropping baseline off\n\n'
+            '  texture {thething_texture}\n\n',
+            '}\n//    Closed thething\n\n', # Main object thething finished
+            '#declare boxedthing = object {\n',
+            '  intersection {\n',
             '    box {<-0.5, -0.5, 0>, <0.5, 0.5, 1.0>\n',
-            '        pigment {rgb <0.5, 0.5, 5>}\n',
+            '          pigment {rgb <0.5, 0.5, 5>}\n',
             '        }\n',
             '    thething\n',
-            '    }\n',
+            '  }\n',
             '}',
             '//    Constructed CGS "boxedthing" of mesh plus bounding box thus adding side walls and bottom\n\n',
-            'object{boxedthing}\n\n',
+            'object {boxedthing}\n\n',
             '\n/*\n\nhappy rendering\n\n  0~0\n (---)\n(.>|<.)\n-------\n\n*/',
         ]
     )  # Closing solids
