@@ -21,6 +21,7 @@ History:
         Finally it can be adjusted nondestructively within POVRay
         instead of re-editing in Photoshop or GIMP and re-exporting every time.
 2.8.2.5 Arbitrary decision to replace all maps with one arbitrary spline.
+2.8.2.6 Minor improvements. Going to freeze branch as "classic".
 
         Main site:
         https://dnyarri.github.io
@@ -233,8 +234,8 @@ def img2pov():
             '    location camera_position\n',
             '    right x*image_width/image_height\n',
             '    up y\n',
-            '    direction <0, 0, 1>\n',
-            f'    angle 2.0*(degrees(atan2({0.5 * proportions}, vlength(camera_position - <0.0, 0.0, 1.0>))))    // Supposed to fit object\n',
+            '  direction <0, 0, vlength(camera_position - <0.0, 0.0, 1.0>)>  // May alone work for many pictures. Otherwise fiddle with angle below\n',
+            f'//    angle 2.0*(degrees(atan2({0.5 * proportions}, vlength(camera_position - <0.0, 0.0, 1.0>))))    // Supposed to fit object\n',
             '    look_at <0.0, 0.0, 0.5>\n}\n\n',
             'light_source{0*x\n    color rgb <1.0, 1.0, 1.0>\n    translate <20, 20, 20>\n}\n',
             '\n//  Layered thething texture\n',
@@ -333,11 +334,11 @@ def img2pov():
 
             # Pyramid completed. Ave me!
 
-    resultfile.write('\n\n  inside_vector <0, 0, 1>\n\n')
-
-    # Sample texture of textures
+    # Closing object
     resultfile.writelines(
         [
+            '\n\n  inside_vector <0, 0, 1>\n\n'
+            f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Alternative way to clip baseline\n\n',
             '  texture {thething_texture}\n',
             '}\n//    Closed thething\n\n',
             '#declare boxedthing = object{\n',
