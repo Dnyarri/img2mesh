@@ -23,7 +23,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "1.0.1.0"
+__version__ = "1.8.21.0"    # Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
@@ -91,7 +91,7 @@ def img2stl():
     resultfilename = filedialog.asksaveasfilename(
         title='Save stereolithography STL file',
         filetypes=[
-            ('3D object file', '*.stl'),
+            ('3D print file', '*.stl'),
             ('All Files', '*.*'),
         ],
         defaultextension=('3D object file', '.stl'),
@@ -119,32 +119,22 @@ def img2stl():
         '''
         Analog of src from FilterMeister, force repeat edge instead of out of range
         '''
-        cx = x
-        cy = y
-        cx = max(0, cx)
-        cx = min((X - 1), cx)
-        cy = max(0, cy)
-        cy = min((Y - 1), cy)
+        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
+        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
 
         position = (cx * Z) + z  # Here is the main magic of turning two x, z into one array position
         channelvalue = int(((imagedata[cy])[position]))
 
         return channelvalue
 
-
     # end of src function
-
 
     def srcY(x, y):
         '''
         Converting to greyscale, returns Yntensity, force repeat edge instead of out of range
         '''
-        cx = x
-        cy = y
-        cx = max(0, cx)
-        cx = min((X - 1), cx)
-        cy = max(0, cy)
-        cy = min((Y - 1), cy)
+        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
+        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
 
         if info['planes'] < 3:  # supposedly L and LA
             Yntensity = src(x, y, 0)
@@ -152,7 +142,6 @@ def img2stl():
             Yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
 
         return Yntensity
-
 
     # end of srcY function
     #

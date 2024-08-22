@@ -37,7 +37,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2023-2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "2.8.3.0"
+__version__ = "2.8.21.0"    # Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
@@ -134,12 +134,8 @@ def img2pov():
         '''
         Analog src from FM, force repeat edge instead of out of range
         '''
-        cx = x
-        cy = y
-        cx = max(0, cx)
-        cx = min((X - 1), cx)
-        cy = max(0, cy)
-        cy = min((Y - 1), cy)
+        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
+        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
 
         position = (cx * Z) + z  # Here is the main magic of turning two x, z into one array position
         channelvalue = int(((imagedata[cy])[position]))
@@ -152,12 +148,8 @@ def img2pov():
         '''
         Converting to greyscale, returns Yntensity, force repeat edge instead of out of range
         '''
-        cx = x
-        cy = y
-        cx = max(0, cx)
-        cx = min((X - 1), cx)
-        cy = max(0, cy)
-        cy = min((Y - 1), cy)
+        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
+        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
 
         if info['planes'] < 3:  # supposedly L and LA
             Yntensity = src(x, y, 0)
@@ -225,7 +217,7 @@ def img2pov():
     )
 
     # Camera and light
-    proportions = max(X, Y) / X
+
     resultfile.writelines(
         [
             '\n/*  Camera\n\n',
@@ -333,7 +325,7 @@ def img2pov():
     resultfile.writelines(
         [
             '\n\n  inside_vector <0, 0, 1>\n\n',
-            '//  clipped_by {plane{-z, -0.01}}  // Variant of cropping baseline off\n\n'
+            f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Variant of cropping baseline off\n\n'
             '  texture {thething_texture}\n\n',
             '}\n//    Closed thething\n\n', # Main object thething finished
             '#declare boxedthing = object {\n',
@@ -341,7 +333,7 @@ def img2pov():
             '    box {<-0.5, -0.5, 0>, <0.5, 0.5, 1.0>\n',
             '          pigment {rgb <0.5, 0.5, 5>}\n',
             '        }\n',
-            '    thething\n',
+            '    object {thething}\n',
             '  }\n',
             '}',
             '//    Constructed CGS "boxedthing" of mesh plus bounding box thus adding side walls and bottom\n\n',
