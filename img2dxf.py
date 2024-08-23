@@ -212,16 +212,20 @@ def img2dxf():
                     f'11\n{(xRescale*(xWrite+xOffset)):f}\n21\n{(yRescale*(yWrite+yOffset)):f}\n31\n{(zOffset+zRescale*v9):f}\n',
                     f'12\n{(xRescale*(xWrite+0.5+xOffset)):f}\n22\n{(yRescale*(yWrite-0.5+yOffset)):f}\n32\n{(zOffset+zRescale*v3):f}\n',
                     '62\n0\n0\n',  # triangle 2
+
                     '3DFACE\n8\nMESH\n',    # Opening triangle 4
                     f'10\n{(xRescale*(xWrite+0.5+xOffset)):f}\n20\n{(yRescale*(yWrite-0.5+yOffset)):f}\n30\n{(zOffset+zRescale*v3):f}\n',
                     f'11\n{(xRescale*(xWrite+xOffset)):f}\n21\n{(yRescale*(yWrite+yOffset)):f}\n31\n{(zOffset+zRescale*v9):f}\n',
                     f'12\n{(xRescale*(xWrite+0.5+xOffset)):f}\n22\n{(yRescale*(yWrite+0.5+yOffset)):f}\n32\n{(zOffset+zRescale*v5):f}\n',
                     '62\n0\n0\n',  # triangle 4
+
                     '3DFACE\n8\nMESH\n',    # Opening triangle 6
                     f'10\n{(xRescale*(xWrite+0.5+xOffset)):f}\n20\n{(yRescale*(yWrite+0.5+yOffset)):f}\n30\n{(zOffset+zRescale*v5):f}\n',
                     f'11\n{(xRescale*(xWrite+xOffset)):f}\n21\n{(yRescale*(yWrite+yOffset)):f}\n31\n{(zOffset+zRescale*v9):f}\n',
                     f'12\n{(xRescale*(xWrite-0.5+xOffset)):f}\n22\n{(yRescale*(yWrite+0.5+yOffset)):f}\n32\n{(zOffset+zRescale*v7):f}\n',
                     f'62\n0\n0\n',  # triangle 6
+
+                    '3DFACE\n8\nMESH\n',    # Opening triangle 8
                     f'10\n{(xRescale*(xWrite-0.5+xOffset)):f}\n20\n{(yRescale*(yWrite+0.5+yOffset)):f}\n30\n{(zOffset+zRescale*v7):f}\n',
                     f'11\n{(xRescale*(xWrite+xOffset)):f}\n21\n{(yRescale*(yWrite+yOffset)):f}\n31\n{(zOffset+zRescale*v9):f}\n',
                     f'12\n{(xRescale*(xWrite-0.5+xOffset)):f}\n22\n{(yRescale*(yWrite-0.5+yOffset)):f}\n32\n{(zOffset+zRescale*v1):f}\n',
