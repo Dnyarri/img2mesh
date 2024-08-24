@@ -154,8 +154,7 @@ def img2obj():
     yOffset = -0.5*float(Y-1)  # To be added BEFORE rescaling to center object
     zOffset = 0.0
 
-    xRescale = 1.0 / float(max(X, Y))    # To fit object into 1,1,1 cube
-    yRescale = xRescale
+    yRescale = xRescale = 1.0 / float(max(X, Y))    # To fit object into 1,1,1 cube
     zRescale = 1.0 / float(maxcolors)
 
     # 	WRITING OBJ FILE, finally
@@ -177,12 +176,11 @@ def img2obj():
             # Since I was unable to find clear declaration of coordinate system, I'll plug a coordinate switch here
 
             # Reading switch:
-            xRead = x
-            yRead = (Y - 1 - y)     # 'yRead = Y - y' coordinate mirror to mimic Photoshop coordinate system; +/- 1 steps below are inverted correspondingly vs. original img2mesh
+            xRead = x; yRead = (Y - 1 - y)
+            # 'yRead = Y - y' coordinate mirror to mimic Photoshop coordinate system; +/- 1 steps below are inverted correspondingly vs. original img2mesh
 
             # Remains of Writing switch. No longer used since v. 0.1.0.2 but var names remained so dummy plug must be here.
-            xWrite = x
-            yWrite = y
+            xWrite = x; yWrite = y
 
             v9 = srcY(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
             v1 = 0.25 * (v9 + srcY((xRead - 1), yRead) + srcY((xRead - 1), (yRead + 1)) + srcY(xRead, (yRead + 1)))

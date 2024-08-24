@@ -236,7 +236,7 @@ def img2pov():
             '}\n\n',
             'light_source {0*x\n    color rgb <1.0, 1.0, 1.0>\n    translate <-5, -5, 5>\n}\n',
             '\n//  Layered thething texture\n',
-            '#declare thething_texture_bottom =\n',
+            '#declare thething_texture_bottom =    // Smooth z gradient\n',
             '    texture {\n',
             '        pigment {\n',
             '        gradient z\n',
@@ -248,21 +248,24 @@ def img2pov():
             '        }\n',
             '    finish {phong 1.0}\n',
             '    }\n\n',
-            '#declare thething_texture_top =\n',
+            '#declare thething_texture_top =       // Sharp horizontals overlay\n',
+            '    #declare line_width = 0.01;\n',
             '    texture {\n',
             '        pigment {\n',
             '        gradient z\n',
             '            colour_map {\n',
-            '                [0.00, rgbt <0,0,0,1>]\n',
-            '                [0.48, rgbt <0,0,0,1>]\n',
-            '                [0.50, rgbt <0,0,0,0>]\n',
-            '                [0.52, rgbt <0,0,0,1>]\n',
-            '                [1.00, rgbt <0,0,0,1>]\n',
+            '                [0.0, rgbt <0,0,0,1>]\n',
+            '                [0.5 - line_width, rgbt <0,0,0,1>]\n',
+            '                [0.5 - line_width, rgbt <0,0,0,0>]\n',
+            '                [0.5, rgbt <0,0,0,0>]\n',
+            '                [0.5 + line_width, rgbt <0,0,0,0>]\n',
+            '                [0.5 + line_width, rgbt <0,0,0,1>]\n',
+            '                [1.0, rgbt <0,0,0,1>]\n',
             '            }\n',
             '        }\n',
             '      scale 0.1\n',
             '    }\n\n',
-            '#declare thething_texture =\n',
+            '#declare thething_texture =           // Overall texture used in the end\n',
             '    texture {thething_texture_bottom}\n',
             '    texture {thething_texture_top}\n',
             '\n\n// Main mesh "thething" begins. NOW!\n',
@@ -276,8 +279,7 @@ def img2pov():
     xOffset = -0.5 * float(X - 1)  # To be added BEFORE rescaling to center object.
     yOffset = -0.5 * float(Y - 1)  # To be added BEFORE rescaling to center object
 
-    xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
-    yRescale = xRescale
+    yRescale = xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
     zRescale = 1.0 / float(maxcolors)
 
     resultfile.write('\n#declare thething = mesh {\n')  # Opening mesh object "thething"
@@ -325,7 +327,7 @@ def img2pov():
     resultfile.writelines(
         [
             '\n\n  inside_vector <0, 0, 1>\n\n',
-            f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Variant of cropping baseline off\n\n'
+            f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Variant of cropping baseline on minimal color step\n\n'
             '  texture {thething_texture}\n\n',
             '}\n//    Closed thething\n\n', # Main object thething finished
             '#declare boxedthing = object {\n',
