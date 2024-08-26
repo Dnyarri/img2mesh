@@ -5,3 +5,4 @@ temp/
 *.txt
 old/
 development/
+build/
