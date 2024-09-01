@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-IMG2OBJ - Program for conversion of image heightfield to triangle mesh in OBJ format 
+IMG2OBJ - Program for conversion of image heightfield to triangle mesh in OBJ format
 -----------------------------------------------------------------------------------------
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  

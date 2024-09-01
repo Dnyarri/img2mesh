@@ -3,7 +3,7 @@
 '''
 IMG2MESH - Program for conversion of image heightfield to triangle 3D-mesh in different formats
 ------------------------------------------------------------------------------------------------
-Common GUI shell for img2pov, img2obj, img2stl and img2dxf modules. 
+Common GUI shell for img2pov, img2obj, img2stl and img2dxf modules.
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  
             aka Ilyich the Toad (mailto:amphisoft@gmail.com)  

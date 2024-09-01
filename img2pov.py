@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-IMG2POV - Program for conversion of image heightfield to triangle mesh in POVRay format 
+IMG2POV - Program for conversion of image heightfield to triangle mesh in POVRay format
 ---------------------------------------------------------------------------------------------
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  

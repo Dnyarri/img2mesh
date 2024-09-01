@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-IMG2STL - Program for conversion of image heightfield to triangle mesh in STL format 
+IMG2STL - Program for conversion of image heightfield to triangle mesh in STL format
 -----------------------------------------------------------------------------------------
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  
