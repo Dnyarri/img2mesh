@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 
 '''
-IMG2POV - Program for conversion of image heightfield to triangle mesh in POVRay format
+IMG2POV - Program for conversion of image heightfield to triangle mesh in POVRay format 
 ---------------------------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
-            aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  
+            aka Ilyich the Toad (mailto:amphisoft@gmail.com)  
 
 History:
-
-001     Abandoned img2mesh v.1 and turned to img2mesh v.2 with completely different mesh structure.
-005     Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng
+    001 Abandoned img2mesh v.1 and turned to img2mesh v.2 with completely different mesh structure.
+    005 Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng
         Support for 16 bit/channel PNGs added. Added mesh encapsulation box.
-007     Output cleanup and generalization. GUI improved to show progress during long processing.
+    007 Output cleanup and generalization. GUI improved to show progress during long processing.
         Reducing unnecessary import.
 2.7.1.0 Significant code cleanup with .writelines. Versioning more clear.
 2.8.0.0 Total rewrite to remove all transforms from POVRay.
@@ -23,13 +22,16 @@ History:
 2.8.2.5 Arbitrary decision to replace all maps with one arbitrary spline.
 2.8.3.0 Everything rewritten to fully match Photoshop coordinate system.
         Important changes in camera, handle with care!
+2.9.1.0 POV export changed, light and textures improved, whole product update.
+        Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
 
-        Main site:
-        https://dnyarri.github.io
+-------------------
+Main site:
+https://dnyarri.github.io  
 
-        Project mirrored at:
-        https://github.com/Dnyarri/img2mesh
-        https://gitflic.ru/project/dnyarri/img2mesh
+Project mirrored at:  
+https://github.com/Dnyarri/img2mesh  
+https://gitflic.ru/project/dnyarri/img2mesh  
 
 '''
 
@@ -37,7 +39,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2023-2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "2.8.21.0"    # Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
+__version__ = "2.9.1.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"

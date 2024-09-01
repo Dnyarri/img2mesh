@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 
 '''
-IMG2OBJ - Program for conversion of image heightfield to triangle mesh in OBJ format
+IMG2OBJ - Program for conversion of image heightfield to triangle mesh in OBJ format 
 -----------------------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
-            aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  
+            aka Ilyich the Toad (mailto:amphisoft@gmail.com)  
 History:
 1.0.0.0 Initial production release.
 1.0.1.0 Program converted into self-calling function to have a possibility to import it.
+1.9.1.0 Multiple changes everywhere lead to whole product update.
+        Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
 
-        Main site:
-        https://dnyarri.github.io
+-------------------
+Main site:
+https://dnyarri.github.io  
 
-        Project mirrored at:
-        https://github.com/Dnyarri/img2mesh
-        https://gitflic.ru/project/dnyarri/img2mesh
+Project mirrored at:  
+https://github.com/Dnyarri/img2mesh  
+https://gitflic.ru/project/dnyarri/img2mesh  
 
 '''
 
@@ -23,7 +26,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "1.8.21.0"    # Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
+__version__ = "1.9.1.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"

@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 
 '''
-IMG2DXF - Program for conversion of image heightfield to triangle mesh in DXF format
+IMG2DXF - Program for conversion of image heightfield to triangle mesh in DXF format 
 -----------------------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
-            aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  
+            aka Ilyich the Toad (mailto:amphisoft@gmail.com)  
 History:
 0.0.0.1 Development started 23 Aug 2024.
-0.0.0.2 Bugs fixed, seem to work ok. Coordinate system handedness still remains unknown,
-        so far the same coordinates as OBJ ones are used.
+0.0.0.2 Bugs fixed, seem to work ok.
+1.9.1.0 First production release.
+        Versioning set to MAINVERSION.MONTH since Jan 2024.DAY.subversion
 
-        Main site:
-        https://dnyarri.github.io
+-------------------
+Main site:
+https://dnyarri.github.io  
 
-        Project mirrored at:
-        https://github.com/Dnyarri/img2mesh
-        https://gitflic.ru/project/dnyarri/img2mesh
+Project mirrored at:  
+https://github.com/Dnyarri/img2mesh  
+https://gitflic.ru/project/dnyarri/img2mesh  
 
 '''
 
@@ -24,10 +26,10 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "0.0.0.2"
+__version__ = "1.9.1.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
-__status__ = "Development"
+__status__ = "Production"
 
 from tkinter import Tk, Label, filedialog
 

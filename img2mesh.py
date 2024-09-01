@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
 '''
-IMG2MESH - Program for conversion of image heightfield to triangle mesh in different formats
----------------------------------------------------------------------------------------------
-Common GUI shell for img2pov, img2obj and img2stl modules.
+IMG2MESH - Program for conversion of image heightfield to triangle 3D-mesh in different formats
+------------------------------------------------------------------------------------------------
+Common GUI shell for img2pov, img2obj, img2stl and img2dxf modules. 
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
-            aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  
+            aka Ilyich the Toad (mailto:amphisoft@gmail.com)  
+
 History:
-
-1.0.0.0     Initial production release.
-1.8.24.1    DXF export added, POV export changed, multiple changes everywhere lead to whole product update.
-            Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
+1.0.0.0 Initial production release.
+2.9.1.0 DXF export added, POV export changed, multiple changes everywhere lead to whole product update.
+        Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
 
         Main site:
         https://dnyarri.github.io
@@ -26,7 +26,7 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "1.8.24.1"
+__version__ = "2.9.1.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
