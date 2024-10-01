@@ -8,22 +8,18 @@ Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)
             aka Ilyich the Toad (mailto:amphisoft@gmail.com)  
 
 History:
-    001 Abandoned img2mesh v.1 and turned to img2mesh v.2 with completely different mesh structure.
-    005 Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng
-        Support for 16 bit/channel PNGs added. Added mesh encapsulation box.
-    007 Output cleanup and generalization. GUI improved to show progress during long processing.
-        Reducing unnecessary import.
-2.7.1.0 Significant code cleanup with .writelines. Versioning more clear.
-2.8.0.0 Total rewrite to remove all transforms from POVRay.
-2.8.1.0 Program converted into self-calling function to have a possibility to import it.
-2.8.2.1 Internal brightness map transfer function added.
-        Finally it can be adjusted nondestructively within POVRay
-        instead of re-editing in Photoshop or GIMP and re-exporting every time.
-2.8.2.5 Arbitrary decision to replace all maps with one arbitrary spline.
-2.8.3.0 Everything rewritten to fully match Photoshop coordinate system.
-        Important changes in camera, handle with care!
-2.9.1.0 POV export changed, light and textures improved, whole product update.
-        Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
+
+001          Abandoned img2mesh v.1 and turned to img2mesh v.2 with completely different mesh structure.  
+005          Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng. Support for 16 bit/channel PNGs added. Added mesh encapsulation box.  
+007          Output cleanup and generalization. GUI improved to show progress during long processing. Reducing unnecessary import.  
+2.7.1.0     Significant code cleanup with .writelines. Versioning more clear.  
+2.8.0.0     Total rewrite to remove all transforms from POVRay.  
+2.8.1.0     Program converted into self-calling function to have a possibility to import it.  
+2.8.2.1     Internal brightness map transfer function added. Finally it can be adjusted nondestructively within POVRay instead of re-editing in Photoshop or GIMP and re-exporting every time.  
+2.8.2.5     Arbitrary decision to replace all maps with one arbitrary spline.  
+2.8.3.0     Everything rewritten to fully match Photoshop coordinate system. Important changes in camera, handle with care!  
+2.9.1.0     POV export changed, light and textures improved, whole product update. Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion  
+2.10.1.0    Maintenance update.  
 
 -------------------
 Main site:
@@ -80,12 +76,11 @@ def img2pov():
     # --------------------------------------------------------------
 
     # Open source image
-    sourcefilename = filedialog.askopenfilename(
-        title='Open source PNG file', filetypes=[('PNG', '.png')], defaultextension=('PNG', '.png')
-    )
+    sourcefilename = filedialog.askopenfilename(title='Open source PNG file', filetypes=[('PNG', '.png')], defaultextension=('PNG', '.png'))
     # Source file name taken
 
-    if (sourcefilename == '') or (sourcefilename == None):
+    if (sourcefilename == '') or (sourcefilename is None):
+        sortir.destroy()
         return None
         # break if user press 'Cancel'
 
@@ -93,15 +88,15 @@ def img2pov():
     # opening file with PyPNG
 
     X, Y, pixels, info = source.asDirect()
-    # Opening image, iDAT comes to "pixels" as bytearray, to be tuple'd later
+    # Opening image, iDAT comes to "pixels" generator, to be tuple'd later
 
-    Z = info['planes']          # Maximum CHANNEL NUMBER
-    imagedata = tuple((pixels)) # Attempt to fix all bytearrays
+    Z = info['planes']  # Maximum channel number
+    imagedata = tuple((pixels))  # Building tuple from generator
 
     if info['bitdepth'] == 8:
-        maxcolors = 255         # Maximal value for 8-bit channel
+        maxcolors = 255  # Maximal value for 8-bit channel
     if info['bitdepth'] == 16:
-        maxcolors = 65535       # Maximal value for 16-bit channel
+        maxcolors = 65535  # Maximal value for 16-bit channel
 
     # source file opened, initial data received
 
@@ -115,7 +110,8 @@ def img2pov():
         defaultextension=('POV-Ray scene file', '.pov'),
     )
 
-    if (resultfilename == '') or (resultfilename == None):
+    if (resultfilename == '') or (resultfilename is None):
+        sortir.destroy()
         return None
         # break if user press 'Cancel'
     # return doesn't seem to work well with .asksaveasfile
@@ -136,8 +132,12 @@ def img2pov():
         '''
         Analog src from FM, force repeat edge instead of out of range
         '''
-        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
-        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
+        cx = x
+        cx = max(0, cx)
+        cx = min((X - 1), cx)
+        cy = y
+        cy = max(0, cy)
+        cy = min((Y - 1), cy)
 
         position = (cx * Z) + z  # Here is the main magic of turning two x, z into one array position
         channelvalue = int(((imagedata[cy])[position]))
@@ -150,8 +150,12 @@ def img2pov():
         '''
         Converting to greyscale, returns Yntensity, force repeat edge instead of out of range
         '''
-        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
-        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
+        cx = x
+        cx = max(0, cx)
+        cx = min((X - 1), cx)
+        cy = y
+        cy = max(0, cy)
+        cy = min((Y - 1), cy)
 
         if info['planes'] < 3:  # supposedly L and LA
             Yntensity = src(x, y, 0)
@@ -164,7 +168,8 @@ def img2pov():
 
     # 	WRITING POV FILE
 
-    seconds = time(); localtime = ctime(seconds)    # will be used for debug info
+    seconds = time()
+    localtime = ctime(seconds)  # will be used for debug info
 
     # ------------
     #  POV header
@@ -305,10 +310,10 @@ def img2pov():
         for x in range(0, X, 1):
 
             v9 = srcY(x, y)  # Current pixel to process and write. Then going to neighbours
-            v1 = 0.25 * (v9 + srcY(x-1, y-1) + srcY(x, y-1) + srcY(x-1, y))
-            v3 = 0.25 * (v9 + srcY(x, y-1) + srcY(x+1, y-1) + srcY(x+1, y))
-            v5 = 0.25 * (v9 + srcY(x+1, y) + srcY(x+1, y+1) + srcY(x, y+1))
-            v7 = 0.25 * (v9 + srcY(x, y+1) + srcY(x-1, y+1) + srcY(x-1, y))
+            v1 = 0.25 * (v9 + srcY(x - 1, y - 1) + srcY(x, y - 1) + srcY(x - 1, y))
+            v3 = 0.25 * (v9 + srcY(x, y - 1) + srcY(x + 1, y - 1) + srcY(x + 1, y))
+            v5 = 0.25 * (v9 + srcY(x + 1, y) + srcY(x + 1, y + 1) + srcY(x, y + 1))
+            v7 = 0.25 * (v9 + srcY(x, y + 1) + srcY(x - 1, y + 1) + srcY(x - 1, y))
 
             # finally going to build pyramid
 
@@ -335,7 +340,7 @@ def img2pov():
             '\n\n  inside_vector <0, 0, 1>\n\n',
             f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Variant of cropping baseline on minimal color step\n\n'
             '  texture {thething_texture}\n\n',
-            '}\n//    Closed thething\n\n', # Main object thething finished
+            '}\n//    Closed thething\n\n',  # Main object thething finished
             '#declare boxedthing = object {\n',
             '  intersection {\n',
             '    box {<-0.5, -0.5, 0>, <0.5, 0.5, 1.0>\n',

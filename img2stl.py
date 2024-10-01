@@ -7,10 +7,11 @@ IMG2STL - Program for conversion of image heightfield to triangle mesh in STL fo
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com)  
             aka Ilyich the Toad (mailto:amphisoft@gmail.com)  
 History:
-1.0.0.0 Initial production release.
-1.0.1.0 Program converted into self-calling function to have a possibility to import it.
-1.9.1.0 Multiple changes everywhere lead to whole product update.
-        Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion
+
+1.0.0.0     Initial production release.  
+1.0.1.0     Program converted into self-calling function to have a possibility to import it.  
+1.9.1.0     Multiple changes everywhere lead to whole product update. Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion  
+1.10.1.0    Maintenance update.  
 
 -------------------
 Main site:
@@ -39,6 +40,7 @@ from png import Reader  # I/O with PyPNG from: https://gitlab.com/drj11/pypng
 
 # ACHTUNG! Starting a whole-program procedure!
 
+
 def img2stl():
     '''
     Procedure for opening PNG heightfield and creating stereolithography .stl 3D mesh file from it.
@@ -50,12 +52,12 @@ def img2stl():
 
     iconpath = Path(__file__).resolve().parent / 'vaba.ico'
     iconname = str(iconpath)
-    useicon = iconpath.exists()     # Check if icon file really exist. If False, it will not be used later.
+    useicon = iconpath.exists()  # Check if icon file really exist. If False, it will not be used later.
 
     sortir = Tk()
     sortir.title('PNG to STL conversion')
     if useicon:
-        sortir.iconbitmap(iconname) # Replacement for simple sortir.iconbitmap('name.ico') - ugly but stable.
+        sortir.iconbitmap(iconname)  # Replacement for simple sortir.iconbitmap('name.ico') - ugly but stable.
     sortir.geometry('+200+100')
     zanyato = Label(sortir, text='Allons-y!', font=('Courier', 14), padx=16, pady=10, justify='center')
     zanyato.pack()
@@ -65,12 +67,11 @@ def img2stl():
     # --------------------------------------------------------------
 
     # Open source image
-    sourcefilename = filedialog.askopenfilename(
-        title='Open source PNG file', filetypes=[('PNG', '.png')], defaultextension=('PNG', '.png')
-    )
+    sourcefilename = filedialog.askopenfilename(title='Open source PNG file', filetypes=[('PNG', '.png')], defaultextension=('PNG', '.png'))
     # Source file name taken
 
-    if (sourcefilename == '') or (sourcefilename == None):
+    if (sourcefilename == '') or (sourcefilename is None):
+        sortir.destroy()
         return None
         # break if user press 'Cancel'
 
@@ -78,15 +79,15 @@ def img2stl():
     # opening file with PyPNG
 
     X, Y, pixels, info = source.asDirect()
-    # Opening image, iDAT comes to "pixels" as bytearray, to be tuple'd later
+    # Opening image, iDAT comes to "pixels" generator, to be tuple'd later
 
-    Z = info['planes']          # Maximum CHANNEL NUMBER
-    imagedata = tuple((pixels)) # Attempt to fix all bytearrays
+    Z = info['planes']  # Maximum channel number
+    imagedata = tuple((pixels))  # Building tuple from generator
 
     if info['bitdepth'] == 8:
-        maxcolors = 255         # Maximal value for 8-bit channel
+        maxcolors = 255  # Maximal value for 8-bit channel
     if info['bitdepth'] == 16:
-        maxcolors = 65535       # Maximal value for 16-bit channel
+        maxcolors = 65535  # Maximal value for 16-bit channel
 
     # source file opened, initial data received
 
@@ -100,7 +101,8 @@ def img2stl():
         defaultextension=('3D object file', '.stl'),
     )
 
-    if (resultfilename == '') or (resultfilename == None):
+    if (resultfilename == '') or (resultfilename is None):
+        sortir.destroy()
         return None
         # break if user press 'Cancel'
     # return doesn't seem to work well with .asksaveasfile
@@ -117,13 +119,16 @@ def img2stl():
     # Image should be opened as "imagedata" by main program before
     # Note that X, Y, Z are not determined in function, you have to determine it in main program
 
-
     def src(x, y, z):
         '''
         Analog of src from FilterMeister, force repeat edge instead of out of range
         '''
-        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
-        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
+        cx = x
+        cx = max(0, cx)
+        cx = min((X - 1), cx)
+        cy = y
+        cy = max(0, cy)
+        cy = min((Y - 1), cy)
 
         position = (cx * Z) + z  # Here is the main magic of turning two x, z into one array position
         channelvalue = int(((imagedata[cy])[position]))
@@ -136,8 +141,12 @@ def img2stl():
         '''
         Converting to greyscale, returns Yntensity, force repeat edge instead of out of range
         '''
-        cx = x; cx = max(0, cx); cx = min((X - 1), cx)
-        cy = y; cy = max(0, cy); cy = min((Y - 1), cy)
+        cx = x
+        cx = max(0, cx)
+        cx = min((X - 1), cx)
+        cy = y
+        cy = max(0, cy)
+        cy = min((Y - 1), cy)
 
         if info['planes'] < 3:  # supposedly L and LA
             Yntensity = src(x, y, 0)
@@ -157,7 +166,7 @@ def img2stl():
     yOffset = 1.0  # To be added BEFORE rescaling to compensate 0.5 Y expansion
     zOffset = 0.0  # To be added AFTER rescaling just in case there should be something to fix
 
-    yRescale = xRescale = 1.0 / float(max(X, Y))    # To fit object into 1,1,1 cube
+    yRescale = xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
     zRescale = 1.0 / float(maxcolors)
 
     # 	WRITING STL FILE, finally
@@ -179,11 +188,13 @@ def img2stl():
             # Since I was unable to find clear declaration of coordinate system, I'll plug a coordinate switch here
 
             # Reading switch:
-            xRead = x; yRead = (Y - 1 - y)
+            xRead = x
+            yRead = Y - 1 - y
             # 'yRead = Y - y' coordinate mirror to mimic Photoshop coordinate system; +/- 1 steps below are inverted correspondingly vs. original img2mesh
 
             # Remains of Writing switch. No longer used since v. 0.1.0.2 but var names remained so dummy plug must be here.
-            xWrite = x; yWrite = y
+            xWrite = x
+            yWrite = y
 
             v9 = srcY(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
             v1 = 0.25 * (v9 + srcY((xRead - 1), yRead) + srcY((xRead - 1), (yRead + 1)) + srcY(xRead, (yRead + 1)))
@@ -364,6 +375,7 @@ def img2stl():
 
     # Dialog destroyed and closed
     # --------------------------------------------------------------
+
 
 # Procedure ended, the program begins
 if __name__ == "__main__":
