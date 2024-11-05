@@ -1,10 +1,12 @@
-[(EN)](README.md) **(RU)**
+
+| [EN](README.md) | RU |
+| ---- | ---- |
 
 # Конвертер из растровых картинок в 3D-сетку треугольников  
 
 Программа на Python для трассировки карты высот в графическом формате ([PNG](http://www.libpng.org/pub/png/)) в трёхмерную векторную сетку треугольников (triangle meash) в форматах [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF, а также STL для 3D-принтеров. Координаты x, y пикселя соответствуют координатам x, y узлов сетки, яркость пикселя соответствует высоте (z) узла сетки. В случае исходных графических файлов с низким разрешением полученная при трассировке 3D-сетка обеспечивает лучшее визуальное качество рендеринга, нежели исходные графические файлы при их использовании в качестве heightfield напрямую.  
 
-![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)
+[![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
 
 Содержимое:
 
@@ -20,7 +22,7 @@
 
 Следует заметить, что img2pov, img2obj и img2stl могут как работать самостоятельно по отдельности, так и быть удобно импортированы во внешнюю программу (как это сделано в img2mesh).
 
-![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)
+[![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)](https://dnyarri.github.io/img2mesh.html)
 
 В данной директории находится наиболее свежая версия программы; несколько более старых закопаны в *"old_versions"* для археологов будущего.  
 

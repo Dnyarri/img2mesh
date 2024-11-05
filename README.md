@@ -1,10 +1,12 @@
-**(EN)** [(RU)](README.RU.md)
+
+| EN | [RU](README.RU.md) |
+| ---- | ---- |
 
 # Bitmap to POVRay 3D triangle mesh converter
 
 Python program for conversion of bitmap heightfield (in [PNG format](http://www.libpng.org/pub/png/)) to 3D triangle mesh in [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
 
-![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)
+[![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
 
 Project content:
 
@@ -20,7 +22,7 @@ Project content:
 
 Note that img2pov, img2obj and img2stl may be both run as standalone programs and be imported into some other software (currently in main img2mesh).
 
-![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)
+[![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)](https://dnyarri.github.io/img2mesh.html)
 
 Current dir contain most recent version of img2mesh program. Some previous versions are saved in *"old_versions"* for future alien archeologist to dig.
 
