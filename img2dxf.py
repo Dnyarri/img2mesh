@@ -11,7 +11,7 @@ History:
 0.0.0.1     Development started 23 Aug 2024.  
 0.0.0.2     Bugs fixed, seem to work ok.  
 1.9.1.0     First production release. Versioning set to MAINVERSION.MONTH since Jan 2024.DAY.subversion  
-1.10.1.0    Maintenance update.  
+1.13.3.0    Maintenance update, minor code cleanup.  
 
 -------------------
 Main site:
@@ -27,14 +27,13 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "1.9.1.0"
+__version__ = "1.13.3.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
 
-from tkinter import Tk, Label, filedialog
-
 from pathlib import Path
+from tkinter import Label, Tk, filedialog
 
 from png import Reader  # I/O with PyPNG from: https://gitlab.com/drj11/pypng
 
@@ -82,7 +81,7 @@ def img2dxf():
     # Opening image, iDAT comes to "pixels" generator, to be tuple'd later
 
     Z = info['planes']  # Maximum channel number
-    imagedata = tuple((pixels))  # Building tuple from generator
+    imagedata = tuple(pixels)  # Building tuple from generator
 
     if info['bitdepth'] == 8:
         maxcolors = 255  # Maximal value for 8-bit channel
@@ -131,7 +130,7 @@ def img2dxf():
         cy = min((Y - 1), cy)
 
         position = (cx * Z) + z  # Here is the main magic of turning two x, z into one array position
-        channelvalue = int(((imagedata[cy])[position]))
+        channelvalue = int((imagedata[cy])[position])
 
         return channelvalue
 

@@ -19,7 +19,7 @@ History:
 2.8.2.5     Arbitrary decision to replace all maps with one arbitrary spline.  
 2.8.3.0     Everything rewritten to fully match Photoshop coordinate system. Important changes in camera, handle with care!  
 2.9.1.0     POV export changed, light and textures improved, whole product update. Versioning changed to MAINVERSION.MONTH since Jan 2024.DAY.subversion  
-2.10.1.0    Maintenance update.  
+2.13.3.0    Maintenance update, minor code cleanup.  
 
 -------------------
 Main site:
@@ -35,15 +35,14 @@ __author__ = "Ilya Razmanov"
 __copyright__ = "(c) 2023-2024 Ilya Razmanov"
 __credits__ = "Ilya Razmanov"
 __license__ = "unlicense"
-__version__ = "2.9.1.0"
+__version__ = "2.13.3.0"
 __maintainer__ = "Ilya Razmanov"
 __email__ = "ilyarazmanov@gmail.com"
 __status__ = "Production"
 
-from tkinter import Tk, Label, filedialog
-from time import time, ctime
-
 from pathlib import Path
+from time import ctime, time
+from tkinter import Label, Tk, filedialog
 
 from png import Reader  # I/O with PyPNG from: https://gitlab.com/drj11/pypng
 
@@ -91,7 +90,7 @@ def img2pov():
     # Opening image, iDAT comes to "pixels" generator, to be tuple'd later
 
     Z = info['planes']  # Maximum channel number
-    imagedata = tuple((pixels))  # Building tuple from generator
+    imagedata = tuple(pixels)  # Building tuple from generator
 
     if info['bitdepth'] == 8:
         maxcolors = 255  # Maximal value for 8-bit channel
@@ -140,7 +139,7 @@ def img2pov():
         cy = min((Y - 1), cy)
 
         position = (cx * Z) + z  # Here is the main magic of turning two x, z into one array position
-        channelvalue = int(((imagedata[cy])[position]))
+        channelvalue = int((imagedata[cy])[position])
 
         return channelvalue
 
@@ -339,14 +338,13 @@ def img2pov():
         [
             '\n\n  inside_vector <0, 0, 1>\n\n',
             f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Variant of cropping baseline on minimal color step\n\n'
-            '  texture {thething_texture}\n\n',
             '}\n//    Closed thething\n\n',  # Main object thething finished
             '#declare boxedthing = object {\n',
             '  intersection {\n',
             '    box {<-0.5, -0.5, 0>, <0.5, 0.5, 1.0>\n',
             '          pigment {rgb <0.5, 0.5, 5>}\n',
             '        }\n',
-            '    object {thething}\n',
+            '    object {thething texture {thething_texture}}\n',
             '  }\n',
             '}',
             '//    Constructed CGS "boxedthing" of mesh plus bounding box thus adding side walls and bottom\n\n',
