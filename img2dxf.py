@@ -70,7 +70,6 @@ def img2dxf():
     # Source file name taken
 
     if (sourcefilename == '') or (sourcefilename is None):
-        sortir.destroy()
         return None
         # break if user press 'Cancel'
 
@@ -101,10 +100,8 @@ def img2dxf():
     )
 
     if (resultfilename == '') or (resultfilename is None):
-        sortir.destroy()
         return None
         # break if user press 'Cancel'
-    # return doesn't seem to work well with .asksaveasfile
 
     resultfile = open(resultfilename, 'w')
     # result file opened
