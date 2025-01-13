@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+
+"""
+IMG2POV - Conversion of image heightfield to triangle mesh in POVRay format
+-----------------------------------------------------------------------------
+
+Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+
+Overview:
+----------
+
+list2pov present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in POVRay format.
+
+Usage:
+-------
+
+`list2pov.list2pov(image3d, maxcolors, result_file_name)`
+
+where:
+
+`image3d` - image as list of lists of lists of int channel values.
+
+`maxcolors` - maximum value of int in `image3d` list.
+
+`result_file_name` - name of POVRay file to export.
+
+History:
+---------
+
+0.0.1.0     Initial standalone img2mesh version with 2x2 folding mesh, Dec 2023.  
+0.0.2.0     Switched to 1x4 pyramid mesh, Jan 2024.  
+0.0.5.0     Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng, providing 16 bit/channel PNGs support.  
+0.0.7.0     Standalone img2mesh stable.  
+2.7.1.0     Significant code cleanup with .writelines. Versioning more clear.  
+2.8.0.0     Total rewrite to remove all transforms from POVRay.  
+2.8.2.1     Internal brightness map transfer function added. Finally it can be adjusted nondestructively within POVRay instead of re-editing in Photoshop or GIMP and re-exporting every time.  
+2.8.2.5     Arbitrary decision to replace all maps with one arbitrary spline.  
+2.8.3.0     Rewritten to fully match Photoshop coordinate system. Important changes in camera, handle with care!  
+2.9.1.0     POV export changed, light and textures improved, whole product update. Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion  
+2.13.4.0    Exported file may be used both as scene and as include.  
+2.13.4.1    Rewritten from standalone img2pov to module list2pov.  
+
+-------------------
+Main site:  
+https://dnyarri.github.io  
+
+Project mirrored at:  
+https://github.com/Dnyarri/img2mesh  
+https://gitflic.ru/project/dnyarri/img2mesh  
+
+"""
+
+__author__ = 'Ilya Razmanov'
+__copyright__ = '(c) 2023-2025 Ilya Razmanov'
+__credits__ = 'Ilya Razmanov'
+__license__ = 'unlicense'
+__version__ = '2.13.13.2'
+__maintainer__ = 'Ilya Razmanov'
+__email__ = 'ilyarazmanov@gmail.com'
+__status__ = 'Production'
+
+from time import ctime, time
+
+
+def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str) -> None:
+    """Converting nested 3D list to POV heightfield triangle mesh.
+
+    `image3d` - image as list of lists of lists of int channel values.
+
+    `maxcolors` - maximum value of int in `image3d` list.
+
+    `resultfilename` - name of POVRay file to export.
+
+    """
+
+    # Determining list sizes
+    Y = len(image3d)
+    X = len(image3d[0])
+    Z = len(image3d[0][0])
+
+    """ ╔═══════════════╗
+        ║ src functions ║
+        ╚═══════════════╝ """
+
+    def src(x: int | float, y: int | float, z: int) -> int | float:
+        """
+        Analog of src from FilterMeister, force repeat edge instead of out of range.
+        Returns int channel value z for pixel x, y
+
+        """
+
+        cx = int(x)
+        cy = int(y)  # nearest neighbor for float input
+        cx = max(0, cx)
+        cx = min((X - 1), cx)
+        cy = max(0, cy)
+        cy = min((Y - 1), cy)
+
+        channelvalue = image3d[cy][cx][z]
+
+        return channelvalue
+
+    # end of src function
+
+    def srcY(x: int | float, y: int | float) -> int | float:
+        """
+        Returns brightness of pixel x, y
+
+        """
+
+        if Z < 3:  # supposedly L and LA
+            Yntensity = src(x, y, 0)
+        else:  # supposedly RGB and RGBA
+            Yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
+
+        return Yntensity
+
+    # end of srcY function
+
+    """ ╔══════════════════╗
+        ║ Writing POV file ║
+        ╚══════════════════╝ """
+
+    resultfile = open(resultfilename, 'w')
+
+    localtime = ctime(time())  # will be used for debug info
+
+    """ ┌────────────┐
+        │ POV header │
+        └────────────┘ """
+
+    resultfile.writelines(
+        [
+            '/*\n',
+            'Persistence of Vision Ray Tracer Scene Description File\n',
+            'Version: 3.7\n',
+            'Description: A triangle mesh scene file converted from PNG image heightfield.\n',
+            '   Coordinate system mimic Photoshop, i.e. the origin is top left corner.\n',
+            '   Z axis points toward viewer.\n\n',
+            'IMPORTANT:\n',
+            '   Generated .pov file may be directly used as include, if the main file contain the following:\n\n',
+            '       #declare Main = 1;\n',
+            '       #include "generated.pov"\n',
+            '       object {thething}\n\n',
+            '   "Main" variable in master file turns off camera, light and texture in include file, allowing master file to take over.\n\n',
+            'Author: Automatically generated by img2mesh program\n',
+            '   https://github.com/Dnyarri/img2mesh\n',
+            '   https://gitflic.ru/project/dnyarri/img2mesh\n',
+            'developed by Ilya Razmanov aka Ilyich the Toad\n',
+            '   https://dnyarri.github.io\n',
+            '   mailto:ilyarazmanov@gmail.com\n\n',
+            f'Generated by: {__file__} ver.: {__version__} at: {localtime}\n*/\n\n',
+        ]
+    )
+
+    """ ┌────────────────────────────┐
+        │ General statements and map │
+        └────────────────────────────┘ """
+
+    resultfile.writelines(
+        [
+            '\n',
+            '#version 3.7;\n\n',
+            '#ifndef (Main)  // Include check 1\n\n',
+            '  global_settings{\n',
+            '    max_trace_level 3   // Set low to speed up rendering. May need to be increased for metals and glasses\n',
+            '    adc_bailout 0.01    // Set high to speed up rendering. May need to be decreased to 1/256 for better quality\n',
+            '    ambient_light <0.5, 0.5, 0.5>\n',
+            '    assumed_gamma 1.0\n  }\n\n',
+            '  #include "colors.inc"\n',
+            '  #include "finish.inc"\n',
+            '  #include "metals.inc"\n',
+            '  #include "golds.inc"\n\n',
+            '#end  // End include check 1\n\n',
+            '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP "Curves" applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh within POVRay.\nBy default exported map is five points linear spline, corresponding to straight line\ndescribing "identical" transform, i.e. input = output.\nYou can both edit existing control points and add new ones. Note that points order is irrelevant\nsince POVRay will resort vectors according to entry value (first digits in the row before comma),\nso you can add middle points at the end of the list below or write the whole list upside down. */\n\n',
+            '#ifndef (Curve)  // Checking whether map is defined in main file\n',
+            '  #declare Curve = function {  // Spline curve construction begins\n',
+            '    spline { linear_spline\n',
+            '      0.0,   <0.0,   0>\n',
+            '      0.25,  <0.25,  0>\n',
+            '      0.5,   <0.5,   0>\n',
+            '      0.75,  <0.75,  0>\n',
+            '      1.0,   <1.0,   0>}\n    }  // Construction complete\n',
+            '#end  // End map definition check\n',
+            '#ifndef (map) #declare map = function(c) {Curve(c).u}; #end  // Spline curve assigned as map\n',
+        ]
+    )
+
+    """ ┌───────────────────────────┐
+        │ Camera, light and texture │
+        └───────────────────────────┘ """
+
+    resultfile.writelines(
+        [
+            '\n#ifndef (Main)  // Include check 2\n\n',
+            '/*  Camera\n\n',
+            'Coordinate system for the whole scene match Photoshop\n',
+            'Origin is top left, z points at you */\n\n',
+            '#declare camera_position = <0.0, 0.0, 3.0>;  // Camera position over object, used for angle\n\n',
+            'camera {\n',
+            '  // orthographic\n',
+            '  location camera_position\n',
+            '  right x*image_width/image_height\n',
+            '  up y\n',
+            '  sky <0, -1, 0>\n',
+            '  direction <0, 0, vlength(camera_position - <0.0, 0.0, 1.0>)>  // May alone work for many objects. Otherwise fiddle with angle below\n',
+            f'//  angle 2.0*(degrees(atan2({0.5 * max(X, Y) / X}, vlength(camera_position - <0.0, 0.0, 1.0>)))) // Supposed to fit object\n',
+            '  look_at<0.0, 0.0, 0.5>\n',
+            '}\n\n',
+            'light_source {0*x\n',
+            '    color rgb <1.0, 1.0, 1.0>\n',
+            '//    area_light <1, 0, 0>, <0, 1, 0>, 5, 5 circular orient area_illumination on\n',
+            '    translate <-5, -5, 5>\n',
+            '}\n',
+            '\n//  Layered thething texture\n',
+            '#declare thething_texture_bottom =    // Smooth z gradient\n',
+            '  texture {\n',
+            '    pigment {\n',
+            '    gradient z\n',
+            '      colour_map {\n',
+            '        [0.0, rgb <1, 0, 0>]\n',
+            '        [0.5, rgb <0, 0, 1>]\n',
+            '        [1.0, rgb <1, 1, 1>]\n',
+            '      }\n',
+            '    }\n',
+            '    finish {phong 1.0}\n',
+            '  }\n\n',
+            '#declare thething_texture_top =       // Sharp horizontals overlay\n',
+            '  #declare line_width = 0.01;\n',
+            '  texture {\n',
+            '    pigment {\n',
+            '    gradient z\n',
+            '      colour_map {\n',
+            '        [0.0, rgbt <0,0,0,1>]\n',
+            '        [0.5 - line_width, rgbt <0,0,0,1>]\n',
+            '        [0.5 - line_width, rgbt <0,0,0,0>]\n',
+            '        [0.5, rgbt <0,0,0,0>]\n',
+            '        [0.5 + line_width, rgbt <0,0,0,0>]\n',
+            '        [0.5 + line_width, rgbt <0,0,0,1>]\n',
+            '        [1.0, rgbt <0,0,0,1>]\n',
+            '      }\n',
+            '    }\n',
+            '    scale 0.1\n',
+            '  }\n\n',
+            '#declare thething_texture =           // Overall texture used in the end\n',
+            '    texture {thething_texture_bottom}\n',
+            '    texture {thething_texture_top}\n',
+            '\n\n#end  // End include check 2\n',
+            '\n\n// Main mesh "thething" begins. NOW!\n',
+        ]
+    )
+
+    """ ┌──────┐
+        │ Mesh │
+        └──────┘ """
+
+    # Global positioning and scaling to tweak.
+
+    xOffset = -0.5 * float(X - 1)  # To be added BEFORE rescaling to center object.
+    yOffset = -0.5 * float(Y - 1)  # To be added BEFORE rescaling to center object
+
+    yRescale = xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
+    zRescale = 1.0 / float(maxcolors)
+
+    resultfile.write('\n#declare thething = mesh {\n')  # Opening mesh object "thething"
+
+    # Now going to cycle through image and build mesh
+
+    for y in range(0, Y, 1):
+        resultfile.write(f'\n\n   // Row {y}\n')
+
+        for x in range(0, X, 1):
+            v9 = srcY(x, y)  # Current pixel to process and write. Then going to neighbours
+            v1 = 0.25 * (v9 + srcY(x - 1, y - 1) + srcY(x, y - 1) + srcY(x - 1, y))
+            v3 = 0.25 * (v9 + srcY(x, y - 1) + srcY(x + 1, y - 1) + srcY(x + 1, y))
+            v5 = 0.25 * (v9 + srcY(x + 1, y) + srcY(x + 1, y + 1) + srcY(x, y + 1))
+            v7 = 0.25 * (v9 + srcY(x, y + 1) + srcY(x - 1, y + 1) + srcY(x - 1, y))
+
+            # finally going to build pyramid
+
+            resultfile.write(
+                f'\n    triangle {{<{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v1})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v3})>}}'
+            )  # Triangle 2 1-9-3
+
+            resultfile.write(
+                f'\n    triangle {{<{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v3})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v5})>}}'
+            )  # Triangle 4 3-9-5
+
+            resultfile.write(
+                f'\n    triangle {{<{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v5})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v7})>}}'
+            )  # Triangle 6 5-9-7
+
+            resultfile.write(
+                f'\n    triangle {{<{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v7})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v1})>}}'
+            )  # Triangle 8 7-9-1
+
+        # Pyramid construction complete. Ave me!
+
+    resultfile.writelines(
+        [
+            '\n\n  inside_vector <0, 0, 1>\n\n',
+            f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Variant of cropping baseline on minimal color step\n\n}}\n//    Closed thething\n\n',
+        ]
+    )  # Main object thething finished
+
+    """ ┌────────────────────────────────────┐
+        │ Inserting finished mesh into scene │
+        └────────────────────────────────────┘ """
+
+    resultfile.writelines(
+        [
+            '\n#ifndef (Main)  // Include check 3\n\n',
+            '#declare boxedthing = object {\n',
+            '  intersection {\n',
+            '    box {<-0.5, -0.5, 0>, <0.5, 0.5, 1.0>\n',
+            '          pigment {rgb <0.5, 0.5, 5>}\n',
+            '        }\n',
+            '    object {thething texture {thething_texture}}\n',
+            '  }\n',
+            '}\n',
+            '//    Constructed CGS "boxedthing" of mesh plus bounding box thus adding side walls and bottom\n\n',
+            'object {boxedthing}\n\n',
+            '\n#end  // End include check 3\n\n',
+            '\n/*\n\nhappy rendering\n\n  0~0\n (---)\n(.>|<.)\n-------\n\n*/',
+        ]
+    )  # Closing solids
+
+    # Close output
+    resultfile.close()
+
+    return None
+
+
+# Procedure end, main body begins
+if __name__ == '__main__':
+    print('Module to be imported, not run as standalone')
