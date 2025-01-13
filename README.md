@@ -8,6 +8,12 @@ Python program for conversion of bitmap heightfield (in [PNG format](http://www.
 
 [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
 
+## Format compatibility
+
+| Import image format | Export 3D mesh format |
+| ------ | ------ |
+| 16 and 8 bits per channel PNG, PGM and PPM  | POV, OBJ, ASCII STL, ASCII DXF |
+
 ## Project content
 
 - **img2mesh** - suitable GUI frontend comprising all programs and functions.

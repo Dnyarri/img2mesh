@@ -8,6 +8,12 @@
 
 [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
 
+## Совместимость с форматами
+
+| Форматы импорта | Форматы экспорта 3D |
+| ------ | ------ |
+| 16 и 8 бит на канал PNG, PGM и PPM  | POV, OBJ, ASCII STL, ASCII DXF |
+
 ## Содержимое
 
 - **img2mesh** - удобный GUI, объединяющий все функции из программ ниже.
