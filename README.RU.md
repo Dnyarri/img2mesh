@@ -1,5 +1,5 @@
 
-| [EN](README.md) | RU |
+| [EN](README.md) | 『✅RU』 |
 | ---- | ---- |
 
 # Конвертер из растровых картинок в 3D-сетку треугольников  
@@ -8,34 +8,48 @@
 
 [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
 
-Содержимое:
+## Содержимое
 
-- **img2mesh** - удобный GUI, импортирующий все функции из программ ниже.
+- **img2mesh** - удобный GUI, объединяющий все функции из программ ниже.
 
-- **img2pov** - конвертер PNG в POVRay scene. Полученная сцена содержит 3D-сетку, объект box (CSG intersection), создающий боковые стенки и дно, свет и камеру. Текстуры заявлены в declare отдельно для удобства редактирования.
+- **img2pov** - конвертер изображений в сцену POVRay. Полученная сцена содержит 3D-сетку, объект box (CSG intersection), создающий боковые стенки и дно, свет и камеру. Текстуры заявлены в declare отдельно для удобства редактирования.
 
-- **img2obj** - конвертер PNG в Wavefront OBJ. Экспортированный файл содержит только 3D-сетку.
+- **img2obj** - конвертер изображений в Wavefront OBJ. Экспортированный файл содержит только 3D-сетку.
 
-- **img2dxf** - конвертер PNG в Autodesk DXF. Экспортированный файл содержит только 3D-сетку.
+- **img2dxf** - конвертер изображений в Autodesk DXF. Экспортированный файл содержит только 3D-сетку.
 
-- **img2stl** - конвертер PNG в STL. Экспортированный файл содержит 3D-сетку и боковые и нижнюю поверхности в виде сетки, поскольку они необходимы 3D-принтеру.
-
-Следует заметить, что img2pov, img2obj и img2stl могут как работать самостоятельно по отдельности, так и быть удобно импортированы во внешнюю программу (как это сделано в img2mesh).
+- **img2stl** - конвертер изображений в STL. Экспортированный файл содержит 3D-сетку и боковые и нижнюю поверхности в виде сетки, поскольку они необходимы 3D-принтеру.
 
 [![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)](https://dnyarri.github.io/img2mesh.html)
 
-В данной директории находится наиболее свежая версия программы; несколько более старых закопаны в *"old_versions"* для археологов будущего.  
+## Внешние зависимости
 
-*Зависимости от внешних библиотек:* [PyPNG](https://gitlab.com/drj11/pypng), Tkinter. Первая лежит рядом с программой в репозитории, и, слава cоздателю, способна работать в таком виде без установки; вторая входит во все типовые дистрибутивы Python.  
+1. [PyPNG](https://gitlab.com/drj11/pypng). Копия включена в дистрибутив img2mesh.
+2. [PyPNM](https://pypi.org/project/PyPNM/). Копия включена в дистрибутив img2mesh.
+3. Tkinter. Входит в состав типового дистрибутива CPython.
 
-*Инструкция по эксплуатации:* программы оборудованы минималистическим GUI, в результате всё, что вы должны сделать после запуска программы, это с помощью окна "Open..." выбрать и открыть файл PNG, с помощью окна "Save..." выбрать файл для сохранения, подождать, пока программа отработает и закроется, затем открыть полученный файл в подходящей программе.
+## Installation and Usage
 
-Прочие программы:
+Комплект программ самодостаточен и должен работать сразу после распаковки при наличии на машине Python. Программы оборудованы минималистическим GUI, в результате всё, что вы должны сделать после запуска программы, это с помощью окна "Open..." выбрать и открыть файл PNG, или PPM, или PGM, затем с помощью окна "Save..." выбрать файл для сохранения, подождать, пока программа отработает и закроется, затем открыть полученный файл в подходящей 3D-программе.
 
-[Вебсайт Жабы Огромной Умственной Силы](https://dnyarri.github.io/)
+### Для разработчиков
 
-Во избежание перебоев проект зеркалится:
+Модуль list2mesh, включающий функции 3D-экспорта, может быть свободно использован другими разработчиками.
 
-[github Dnyarri](https://github.com/Dnyarri/img2mesh)
+## Литература
 
-[gitflic Dnyarri](https://gitflic.ru/project/dnyarri/img2mesh)
+1. [POV-Ray](https://www.povray.org/) и POV SDL.
+
+2. [Wavefront Object Files (.obj)](https://paulbourke.net/dataformats/obj/obj_spec.pdf) в [Paul Bourke collection](https://paulbourke.net/dataformats/).
+
+3. [Stereo Lithography Files (.stl)](https://paulbourke.net/dataformats/stl/) [*ibid*](https://paulbourke.net/dataformats/).
+
+4. [DXF Reference](https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf) от Autodesk, Inc.
+
+### Родственное
+
+[Dnyarri website](https://dnyarri.github.io) - остальной товар от Жабы Огромной Умственной Силы.
+
+[github Dnyarri](https://github.com/Dnyarri/img2mesh).
+
+[gitflic Dnyarri](https://gitflic.ru/project/dnyarri/img2mesh).
