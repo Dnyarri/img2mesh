@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-IMG2POV - Conversion of image heightfield to triangle mesh in POVRay format
+IMG2POV - Conversion of image heightfield to triangle mesh in POV-Ray format
 -----------------------------------------------------------------------------
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
@@ -9,7 +9,7 @@ Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (m
 Overview:
 ----------
 
-list2pov present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in POVRay format.
+list2pov present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in POV-Ray format.
 
 Usage:
 -------
@@ -22,7 +22,7 @@ where:
 
 `maxcolors` - maximum value of int in `image3d` list.
 
-`result_file_name` - name of POVRay file to export.
+`result_file_name` - name of POV-Ray file to export.
 
 History:
 ---------
@@ -32,8 +32,8 @@ History:
 0.0.5.0     Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng, providing 16 bit/channel PNGs support.  
 0.0.7.0     Standalone img2mesh stable.  
 2.7.1.0     Significant code cleanup with .writelines. Versioning more clear.  
-2.8.0.0     Total rewrite to remove all transforms from POVRay.  
-2.8.2.1     Internal brightness map transfer function added. Finally it can be adjusted nondestructively within POVRay instead of re-editing in Photoshop or GIMP and re-exporting every time.  
+2.8.0.0     Total rewrite to remove all transforms from POV-Ray.  
+2.8.2.1     Internal brightness map transfer function added. Finally it can be adjusted nondestructively within POV-Ray instead of re-editing in Photoshop or GIMP and re-exporting every time.  
 2.8.2.5     Arbitrary decision to replace all maps with one arbitrary spline.  
 2.8.3.0     Rewritten to fully match Photoshop coordinate system. Important changes in camera, handle with care!  
 2.9.1.0     POV export changed, light and textures improved, whole product update. Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion  
@@ -45,8 +45,7 @@ Main site:
 https://dnyarri.github.io  
 
 Project mirrored at:  
-https://github.com/Dnyarri/img2mesh  
-https://gitflic.ru/project/dnyarri/img2mesh  
+https://github.com/Dnyarri/img2mesh; https://gitflic.ru/project/dnyarri/img2mesh  
 
 """
 
@@ -54,7 +53,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '2.13.13.2'
+__version__ = '2.14.1.1'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -69,7 +68,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     `maxcolors` - maximum value of int in `image3d` list.
 
-    `resultfilename` - name of POVRay file to export.
+    `resultfilename` - name of POV-Ray file to export.
 
     """
 
@@ -85,7 +84,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     def src(x: int | float, y: int | float, z: int) -> int | float:
         """
         Analog of src from FilterMeister, force repeat edge instead of out of range.
-        Returns int channel value z for pixel x, y
+        Returns int channel z value for pixel x, y
 
         """
 
@@ -102,20 +101,20 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # end of src function
 
-    def srcY(x: int | float, y: int | float) -> int | float:
+    def src_lum(x: int | float, y: int | float) -> int | float:
         """
         Returns brightness of pixel x, y
 
         """
 
         if Z < 3:  # supposedly L and LA
-            Yntensity = src(x, y, 0)
+            yntensity = src(x, y, 0)
         else:  # supposedly RGB and RGBA
-            Yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
+            yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
 
-        return Yntensity
+        return yntensity
 
-    # end of srcY function
+    # end of src_lum function
 
     """ ╔══════════════════╗
         ║ Writing POV file ║
@@ -172,7 +171,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             '  #include "metals.inc"\n',
             '  #include "golds.inc"\n\n',
             '#end  // End include check 1\n\n',
-            '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP "Curves" applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh within POVRay.\nBy default exported map is five points linear spline, corresponding to straight line\ndescribing "identical" transform, i.e. input = output.\nYou can both edit existing control points and add new ones. Note that points order is irrelevant\nsince POVRay will resort vectors according to entry value (first digits in the row before comma),\nso you can add middle points at the end of the list below or write the whole list upside down. */\n\n',
+            '\n/*    Map function\nMaps are transfer functions z value is passed through.\nResult is similar to Photoshop or GIMP "Curves" applied to source heightfield PNG,\nbut here map is nondestructively applied to mesh within POV-Ray.\nBy default exported map is five points linear spline, corresponding to straight line\ndescribing "identical" transform, i.e. input = output.\nYou can both edit existing control points and add new ones. Note that points order is irrelevant\nsince POV-Ray will resort vectors according to entry value (first digits in the row before comma),\nso you can add middle points at the end of the list below or write the whole list upside down. */\n\n',
             '#ifndef (Curve)  // Checking whether map is defined in main file\n',
             '  #declare Curve = function {  // Spline curve construction begins\n',
             '    spline { linear_spline\n',
@@ -270,11 +269,20 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         resultfile.write(f'\n\n   // Row {y}\n')
 
         for x in range(0, X, 1):
-            v9 = srcY(x, y)  # Current pixel to process and write. Then going to neighbours
-            v1 = 0.25 * (v9 + srcY(x - 1, y - 1) + srcY(x, y - 1) + srcY(x - 1, y))
-            v3 = 0.25 * (v9 + srcY(x, y - 1) + srcY(x + 1, y - 1) + srcY(x + 1, y))
-            v5 = 0.25 * (v9 + srcY(x + 1, y) + srcY(x + 1, y + 1) + srcY(x, y + 1))
-            v7 = 0.25 * (v9 + srcY(x, y + 1) + srcY(x - 1, y + 1) + srcY(x - 1, y))
+            """Pyramid structure around default pixel 9.
+            ┌───┬───┬───┐
+            │ 1 │   │ 3 │
+            ├───┼───┼───┤
+            │   │ 9 │   │
+            ├───┼───┼───┤
+            │ 7 │   │ 5 │
+            └───┴───┴───┘
+            """
+            v9 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
+            v1 = 0.25 * (v9 + src_lum(x - 1, y - 1) + src_lum(x, y - 1) + src_lum(x - 1, y))
+            v3 = 0.25 * (v9 + src_lum(x, y - 1) + src_lum(x + 1, y - 1) + src_lum(x + 1, y))
+            v5 = 0.25 * (v9 + src_lum(x + 1, y) + src_lum(x + 1, y + 1) + src_lum(x, y + 1))
+            v7 = 0.25 * (v9 + src_lum(x, y + 1) + src_lum(x - 1, y + 1) + src_lum(x - 1, y))
 
             # finally going to build pyramid
 

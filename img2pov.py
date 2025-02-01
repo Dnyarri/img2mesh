@@ -24,7 +24,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '2.13.7.0'
+__version__ = '2.14.1.1'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -47,7 +47,7 @@ if iconpath.exists():
     sortir.iconbitmap(str(iconpath))
 sortir.geometry(f'200x64+{(sortir.winfo_screenwidth()-200)//2}+{(sortir.winfo_screenheight()-64)//2}')
 sortir.resizable(width=True, height=True)
-zanyato = Label(sortir, text='Starting...', font=('arial', 16), padx=24, pady=10, justify='center')
+zanyato = Label(sortir, text='Starting...', font=('helvetica', 16), padx=24, pady=10, justify='center')
 zanyato.pack(fill=BOTH, expand=True)
 sortir.overrideredirect(True)
 sortir.withdraw()

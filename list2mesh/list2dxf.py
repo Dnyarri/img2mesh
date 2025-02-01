@@ -27,18 +27,18 @@ where:
 History:
 ---------
 
-0.0.0.1     Development started 23 Aug 2024.  
-0.0.0.2     Bugs fixed, seem to work ok.  
-1.9.1.0     First production release. Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion  
-1.13.4.0    Rewritten from standalone img2dxf to module list2dxf.  
+0.0.0.1     Development started 23 Aug 2024.
+
+1.9.1.0     First production release. Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+
+1.13.4.0    Rewritten from standalone img2dxf to module list2dxf.
 
 -------------------
-Main site:  
-https://dnyarri.github.io  
+Main site:
+https://dnyarri.github.io
 
-Project mirrored at:  
-https://github.com/Dnyarri/img2mesh  
-https://gitflic.ru/project/dnyarri/img2mesh  
+Project mirrored at:
+https://github.com/Dnyarri/img2mesh; https://gitflic.ru/project/dnyarri/img2mesh
 
 """
 
@@ -46,7 +46,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '1.13.13.1'
+__version__ = '1.14.1.1'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -75,7 +75,7 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     def src(x: int | float, y: int | float, z: int) -> int | float:
         """
         Analog of src from FilterMeister, force repeat edge instead of out of range.
-        Returns int channel value z for pixel x, y
+        Returns int channel z value for pixel x, y
 
         """
 
@@ -92,20 +92,20 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # end of src function
 
-    def srcY(x: int | float, y: int | float) -> int | float:
+    def src_lum(x: int | float, y: int | float) -> int | float:
         """
         Returns brightness of pixel x, y
 
         """
 
         if Z < 3:  # supposedly L and LA
-            Yntensity = src(x, y, 0)
+            yntensity = src(x, y, 0)
         else:  # supposedly RGB and RGBA
-            Yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
+            yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
 
-        return Yntensity
+        return yntensity
 
-    # end of srcY function
+    # end of src_lum function
 
     """ ╔══════════════════╗
         ║ Writing DXF file ║
@@ -156,11 +156,21 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             xWrite = x
             yWrite = y
 
-            v9 = srcY(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
-            v1 = 0.25 * (v9 + srcY((xRead - 1), yRead) + srcY((xRead - 1), (yRead + 1)) + srcY(xRead, (yRead + 1)))
-            v3 = 0.25 * (v9 + srcY(xRead, (yRead + 1)) + srcY((xRead + 1), (yRead + 1)) + srcY((xRead + 1), yRead))
-            v5 = 0.25 * (v9 + srcY((xRead + 1), yRead) + srcY((xRead + 1), (yRead - 1)) + srcY(xRead, (yRead - 1)))
-            v7 = 0.25 * (v9 + srcY(xRead, (yRead - 1)) + srcY((xRead - 1), (yRead - 1)) + srcY((xRead - 1), yRead))
+            """Pyramid structure around default pixel 9.
+            Remember yRead = Y - 1 - y
+            ┌───┬───┬───┐
+            │ 1 │   │ 3 │
+            ├───┼───┼───┤
+            │   │ 9 │   │
+            ├───┼───┼───┤
+            │ 7 │   │ 5 │
+            └───┴───┴───┘
+            """
+            v9 = src_lum(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
+            v1 = 0.25 * (v9 + src_lum((xRead - 1), yRead) + src_lum((xRead - 1), (yRead + 1)) + src_lum(xRead, (yRead + 1)))
+            v3 = 0.25 * (v9 + src_lum(xRead, (yRead + 1)) + src_lum((xRead + 1), (yRead + 1)) + src_lum((xRead + 1), yRead))
+            v5 = 0.25 * (v9 + src_lum((xRead + 1), yRead) + src_lum((xRead + 1), (yRead - 1)) + src_lum(xRead, (yRead - 1)))
+            v7 = 0.25 * (v9 + src_lum(xRead, (yRead - 1)) + src_lum((xRead - 1), (yRead - 1)) + src_lum((xRead - 1), yRead))
 
             # finally going to pyramid building
 

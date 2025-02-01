@@ -12,12 +12,11 @@ History:
 2.13.13.2   Previous version of img2mesh GUI replaced with completely new joint (PyPNG, PyPNM) ➔ (list2pov, list2obj, list2stl, list2dxf) program with the same name.
 
 -------------------
-Main site:  
-https://dnyarri.github.io  
+Main site:
+https://dnyarri.github.io
 
-Project mirrored at:  
-https://github.com/Dnyarri/img2mesh  
-https://gitflic.ru/project/dnyarri/img2mesh  
+Project mirrored at:
+https://github.com/Dnyarri/img2mesh; https://gitflic.ru/project/dnyarri/img2mesh
 
 """
 
@@ -25,7 +24,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '2.13.13.2'
+__version__ = '2.14.1.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -44,17 +43,36 @@ def DisMiss():
     sortir.destroy()
 
 
+def UINormal():
+    """Normal UI state, buttons enabled"""
+    for widget in frame_left.winfo_children():
+        if widget.winfo_class() in ('Label', 'Button'):
+            widget.config(state='normal')
+    info_string.config(text=info_normal['txt'], foreground=info_normal['fg'], background=info_normal['bg'])
+
+
+def UIBusy():
+    """Busy UI state, buttons disabled"""
+    for widget in frame_left.winfo_children():
+        if widget.winfo_class() in ('Label', 'Button'):
+            widget.config(state='disabled')
+    info_string.config(text=info_busy['txt'], foreground=info_busy['fg'], background=info_busy['bg'])
+    sortir.update()
+
+
 def GetSource():
     """Opening source image and redefining other controls state"""
 
     global zoom_factor, sourcefilename, preview, preview_data
+    global maxcolors, image3D
     zoom_factor = 1
     sourcefilename = filedialog.askopenfilename(title='Open image file', filetypes=[('Supported formats', '.png .ppm .pgm .pbm'), ('PNG', '.png'), ('PNM', '.ppm .pgm .pbm')])
     if sourcefilename == '':
-        return
+        return None
 
     """ ┌───────────────────────────────────────┐
         │ Loading file, converting data to list │
+        │ NOTE: maxcolors, image3D are GLOBALS! │
         └───────────────────────────────────────┘ """
 
     if Path(sourcefilename).suffix == '.png':
@@ -96,22 +114,6 @@ def GetSource():
 
 def SaveAsPOV():
     """Once pressed on Export POV"""
-
-    """ ┌───────────────────────────────────────┐
-        │ Loading file, converting data to list │
-        └───────────────────────────────────────┘ """
-
-    if Path(sourcefilename).suffix == '.png':
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D, info = pnglpng.png2list(sourcefilename)
-
-    elif Path(sourcefilename).suffix in ('.ppm', '.pgm', '.pbm'):
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D = pnmlpnm.pnm2list(sourcefilename)
-
-    else:
-        raise ValueError('Extension not recognized')
-
     # Open "Save as..." file
     savefilename = filedialog.asksaveasfilename(
         title='Save POV-Ray file',
@@ -122,38 +124,21 @@ def SaveAsPOV():
         defaultextension=('POV-Ray scene file', '.pov'),
     )
     if savefilename == '':
-        return
+        return None
 
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to POV and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
 
-    info_string.config(text='BUSY PROCESSING, PLEASE WAIT', foreground='red')
-    sortir.update()
+    UIBusy()
 
     list2pov.list2pov(image3D, maxcolors, savefilename)
 
-    info_string.config(text='Bitmap height field to 3D mesh converter', foreground='grey')
+    UINormal()
 
 
 def SaveAsOBJ():
     """Once pressed on Export OBJ"""
-
-    """ ┌───────────────────────────────────────┐
-        │ Loading file, converting data to list │
-        └───────────────────────────────────────┘ """
-
-    if Path(sourcefilename).suffix == '.png':
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D, info = pnglpng.png2list(sourcefilename)
-
-    elif Path(sourcefilename).suffix in ('.ppm', '.pgm', '.pbm'):
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D = pnmlpnm.pnm2list(sourcefilename)
-
-    else:
-        raise ValueError('Extension not recognized')
-
     # Open "Save as..." file
     savefilename = filedialog.asksaveasfilename(
         title='Save Wavefront OBJ file',
@@ -164,38 +149,21 @@ def SaveAsOBJ():
         defaultextension=('Wavefront OBJ', '.obj'),
     )
     if savefilename == '':
-        return
+        return None
 
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to OBJ and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
 
-    info_string.config(text='BUSY PROCESSING, PLEASE WAIT', foreground='red')
-    sortir.update()
+    UIBusy()
 
     list2obj.list2obj(image3D, maxcolors, savefilename)
 
-    info_string.config(text='Bitmap height field to 3D mesh converter', foreground='grey')
+    UINormal()
 
 
 def SaveAsSTL():
     """Once pressed on Export STL"""
-
-    """ ┌───────────────────────────────────────┐
-        │ Loading file, converting data to list │
-        └───────────────────────────────────────┘ """
-
-    if Path(sourcefilename).suffix == '.png':
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D, info = pnglpng.png2list(sourcefilename)
-
-    elif Path(sourcefilename).suffix in ('.ppm', '.pgm', '.pbm'):
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D = pnmlpnm.pnm2list(sourcefilename)
-
-    else:
-        raise ValueError('Extension not recognized')
-
     # Open "Save as..." file
     savefilename = filedialog.asksaveasfilename(
         title='Save STL file',
@@ -206,39 +174,22 @@ def SaveAsSTL():
         defaultextension=('Stereolithography STL', '.stl'),
     )
     if savefilename == '':
-        info_string.config(text='Bitmap height field to 3D mesh converter', foreground='grey')
-        return
+        UINormal()
+        return None
 
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to STL and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
 
-    info_string.config(text='BUSY PROCESSING, PLEASE WAIT', foreground='red')
-    sortir.update()
+    UIBusy()
 
     list2stl.list2stl(image3D, maxcolors, savefilename)
 
-    info_string.config(text='Bitmap height field to 3D mesh converter', foreground='grey')
+    UINormal()
 
 
 def SaveAsDXF():
     """Once pressed on Export DXF"""
-
-    """ ┌───────────────────────────────────────┐
-        │ Loading file, converting data to list │
-        └───────────────────────────────────────┘ """
-
-    if Path(sourcefilename).suffix == '.png':
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D, info = pnglpng.png2list(sourcefilename)
-
-    elif Path(sourcefilename).suffix in ('.ppm', '.pgm', '.pbm'):
-        # Reading image as list
-        X, Y, Z, maxcolors, image3D = pnmlpnm.pnm2list(sourcefilename)
-
-    else:
-        raise ValueError('Extension not recognized')
-
     # Open "Save as..." file
     savefilename = filedialog.asksaveasfilename(
         title='Save Autodesk DXF file',
@@ -249,18 +200,17 @@ def SaveAsDXF():
         defaultextension=('Autodesk DXF', '.dxf'),
     )
     if savefilename == '':
-        return
+        return None
 
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to DXF and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
 
-    info_string.config(text='BUSY PROCESSING, PLEASE WAIT', foreground='red')
-    sortir.update()
+    UIBusy()
 
     list2dxf.list2dxf(image3D, maxcolors, savefilename)
 
-    info_string.config(text='Bitmap height field to 3D mesh converter', foreground='grey')
+    UINormal()
 
 
 def zoomIn():
@@ -313,9 +263,14 @@ else:
 
 sortir.title(f'img2mesh v. {__version__}')
 sortir.geometry('+200+100')
-sortir.minsize(300, 100)
+sortir.minsize(300, 320)
 
-info_string = Label(sortir, text='Bitmap height field to 3D mesh converter', font=('courier', 8),  foreground='grey')
+# Info statuses dictionaries
+info_normal = {'txt': 'Bitmap height field to 3D mesh converter', 'fg': 'grey', 'bg': 'light grey'}
+info_waiting = {'txt': 'Waiting for input', 'fg': 'green', 'bg': 'light grey'}
+info_busy = {'txt': 'BUSY, PLEASE WAIT', 'fg': 'red', 'bg': 'yellow'}
+
+info_string = Label(sortir, text=info_normal['txt'], font=('courier', 8), foreground=info_normal['fg'], background=info_normal['bg'], relief='groove')
 info_string.pack(side='bottom', padx=0, pady=1, fill='both')
 
 frame_left = Frame(sortir, borderwidth=2, relief='groove')
@@ -323,25 +278,25 @@ frame_left.pack(side='left', anchor='nw')
 frame_right = Frame(sortir, borderwidth=2, relief='groove')
 frame_right.pack(side='right', anchor='nw')
 
-butt01 = Button(frame_left, text='Open image...', font=('arial', 14), cursor='hand2', justify='center', command=GetSource)
+butt01 = Button(frame_left, text='Open image...'.center(30, ' '), font=('helvetica', 14), cursor='hand2', justify='center', command=GetSource)
 butt01.pack(side='top', padx=4, pady=[4, 12], fill='both')
 
-butt02 = Button(frame_left, text='Export POV...', font=('arial', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsPOV)
+butt02 = Button(frame_left, text='Export POV...', font=('helvetica', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsPOV)
 butt02.pack(side='top', padx=4, pady=2, fill='both')
 
-butt03 = Button(frame_left, text='Export OBJ...', font=('arial', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsOBJ)
+butt03 = Button(frame_left, text='Export OBJ...', font=('helvetica', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsOBJ)
 butt03.pack(side='top', padx=4, pady=2, fill='both')
 
-butt04 = Button(frame_left, text='Export STL...', font=('arial', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsSTL)
+butt04 = Button(frame_left, text='Export STL...', font=('helvetica', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsSTL)
 butt04.pack(side='top', padx=4, pady=2, fill='both')
 
-butt05 = Button(frame_left, text='Export DXF...', font=('arial', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsDXF)
+butt05 = Button(frame_left, text='Export DXF...', font=('helvetica', 14), cursor='arrow', justify='center', state='disabled', command=SaveAsDXF)
 butt05.pack(side='top', padx=4, pady=2, fill='both')
 
-butt99 = Button(frame_left, text='Exit', font=('arial', 14), cursor='hand2', justify='center', command=DisMiss)
-butt99.pack(side='bottom', padx=4, pady=[12, 4], fill='both')
+butt99 = Button(frame_left, text='Exit', font=('helvetica', 14), cursor='hand2', justify='center', command=DisMiss)
+butt99.pack(side='bottom', padx=4, pady=[24, 4], fill='both')
 
-zanyato = Label(frame_right, text='Preview area', font=('arial', 10), justify='center', borderwidth=2, relief='groove')
+zanyato = Label(frame_right, text='Preview area', font=('helvetica', 10), justify='center', borderwidth=2, relief='groove')
 zanyato.pack(side='top')
 
 frame_zoom = Frame(frame_right, width=300, borderwidth=2, relief='groove')
