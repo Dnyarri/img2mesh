@@ -1,8 +1,6 @@
 __pycache__/
 .vscode/
+devel*
 temp/
-*.json
-*.txt
 old/
-development/
 build/
