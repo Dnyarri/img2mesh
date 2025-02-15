@@ -24,7 +24,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '2.14.1.10'
+__version__ = '2.14.14.2'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -267,7 +267,6 @@ sortir.minsize(300, 320)
 
 # Info statuses dictionaries
 info_normal = {'txt': 'Bitmap height field to 3D mesh converter', 'fg': 'grey', 'bg': 'light grey'}
-info_waiting = {'txt': 'Waiting for input', 'fg': 'green', 'bg': 'light grey'}
 info_busy = {'txt': 'BUSY, PLEASE WAIT', 'fg': 'red', 'bg': 'yellow'}
 
 info_string = Label(sortir, text=info_normal['txt'], font=('courier', 8), foreground=info_normal['fg'], background=info_normal['bg'], relief='groove')

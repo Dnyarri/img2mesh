@@ -6,26 +6,26 @@ IMG2POV - Conversion of image heightfield to triangle mesh in POV-Ray format
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
 
-Overview:
-----------
+Overview
+---------
 
-list2pov present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in POV-Ray format.
+`list2pov` present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in POV-Ray format.
 
-Usage:
--------
+Usage
+------
 
 `list2pov.list2pov(image3d, maxcolors, result_file_name)`
 
 where:
 
-`image3d` - image as list of lists of lists of int channel values.
+`image3d`: image as list of lists of lists of int channel values.
 
-`maxcolors` - maximum value of int in `image3d` list.
+`maxcolors`: maximum value of int in `image3d` list.
 
-`result_file_name` - name of POV-Ray file to export.
+`result_file_name`: name of POV-Ray file to export.
 
-History:
----------
+History
+--------
 
 0.0.1.0     Initial standalone img2mesh version with 2x2 folding mesh, Dec 2023.  
 0.0.2.0     Switched to 1x4 pyramid mesh, Jan 2024.  
@@ -39,6 +39,7 @@ History:
 2.9.1.0     POV export changed, light and textures improved, whole product update. Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion  
 2.13.4.0    Exported file may be used both as scene and as include.  
 2.13.4.1    Rewritten from standalone img2pov to module list2pov.  
+2.14.14.2   LAST RELEASE OF v2. Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.  
 
 -------------------
 Main site:  
@@ -53,7 +54,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '2.14.1.1'
+__version__ = '2.14.14.2'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -62,13 +63,13 @@ from time import ctime, time
 
 
 def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str) -> None:
-    """Converting nested 3D list to POV heightfield triangle mesh.
+    """Convert nested 3D list of X, Y, Z coordinates to POV heightfield triangle mesh.
 
-    `image3d` - image as list of lists of lists of int channel values.
+    `image3d`: image as list of lists of lists of int channel values.
 
-    `maxcolors` - maximum value of int in `image3d` list.
+    `maxcolors`: maximum value of int in `image3d` list.
 
-    `resultfilename` - name of POV-Ray file to export.
+    `resultfilename`: name of POV-Ray file to export.
 
     """
 
@@ -84,7 +85,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     def src(x: int | float, y: int | float, z: int) -> int | float:
         """
         Analog of src from FilterMeister, force repeat edge instead of out of range.
-        Returns int channel z value for pixel x, y
+        Returns channel z value for pixel x, y
 
         """
 
@@ -99,22 +100,38 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         return channelvalue
 
-    # end of src function
+    def src_lum(x: int | float, y: int | float) -> float:
+        """Returns brightness of pixel x, y, multiplied on opacity if exists, normalized to 0..1 range."""
 
-    def src_lum(x: int | float, y: int | float) -> int | float:
-        """
-        Returns brightness of pixel x, y
-
-        """
-
-        if Z < 3:  # supposedly L and LA
+        if Z == 1:  # L
             yntensity = src(x, y, 0)
-        else:  # supposedly RGB and RGBA
-            yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
+        elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
+            yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
+        elif Z == 3:  # RGB
+            yntensity = 0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)
+        elif Z == 4:  # RGBA, multiply calculated L on A. A = 0 is transparent, a = maxcolors is opaque
+            yntensity = (0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
-        return yntensity
+        return yntensity / float(maxcolors)
 
-    # end of src_lum function
+    def src_lum_blin(x: float, y: float) -> float:
+        """Based on src_lum above, but returns bilinearly interpolated brightness of pixel x, y"""
+
+        fx = float(x)  # Force float input coordinates for interpolation
+        fy = float(y)
+
+        # Neighbor pixels coordinates (square corners x0,y0; x1,y0; x0,y1; x1,y1)
+        x0 = int(x)
+        x1 = x0 + 1
+        y0 = int(y)
+        y1 = y0 + 1
+
+        # Reading corners src_lum (see scr_lum above) and interpolating
+        channelvalue = (
+            src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
+        )
+
+        return channelvalue
 
     """ ╔══════════════════╗
         ║ Writing POV file ║
@@ -142,13 +159,10 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             '       #include "generated.pov"\n',
             '       object {thething}\n\n',
             '   "Main" variable in master file turns off camera, light and texture in include file, allowing master file to take over.\n\n',
-            'Author: Automatically generated by img2mesh program\n',
-            '   https://github.com/Dnyarri/img2mesh\n',
-            '   https://gitflic.ru/project/dnyarri/img2mesh\n',
+            f'Author: Automatically generated by {__name__} {__version__} at: {localtime}\n',
             'developed by Ilya Razmanov aka Ilyich the Toad\n',
             '   https://dnyarri.github.io\n',
-            '   mailto:ilyarazmanov@gmail.com\n\n',
-            f'Generated by: {__file__} ver.: {__version__} at: {localtime}\n*/\n\n',
+            '   mailto:ilyarazmanov@gmail.com\n*/\n\n',
         ]
     )
 
@@ -204,7 +218,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             '  sky <0, -1, 0>\n',
             '  direction <0, 0, vlength(camera_position - <0.0, 0.0, 1.0>)>  // May alone work for many objects. Otherwise fiddle with angle below\n',
             f'//  angle 2.0*(degrees(atan2({0.5 * max(X, Y) / X}, vlength(camera_position - <0.0, 0.0, 1.0>)))) // Supposed to fit object\n',
-            '  look_at<0.0, 0.0, 0.5>\n',
+            '  look_at <0.0, 0.0, 0.5>\n',
             '}\n\n',
             'light_source {0*x\n',
             '    color rgb <1.0, 1.0, 1.0>\n',
@@ -255,11 +269,18 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # Global positioning and scaling to tweak.
 
-    xOffset = -0.5 * float(X - 1)  # To be added BEFORE rescaling to center object.
-    yOffset = -0.5 * float(Y - 1)  # To be added BEFORE rescaling to center object
+    X_OFFSET = -0.5 * (X - 1.0)  # To be added BEFORE rescaling to center object.
+    Y_OFFSET = -0.5 * (Y - 1.0)  # To be added BEFORE rescaling to center object
 
-    yRescale = xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
-    zRescale = 1.0 / float(maxcolors)
+    RESCALE = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
+
+    def x_out(x: int, shift: float) -> float:
+        """Recalculate source x to result x"""
+        return RESCALE * (x + shift + X_OFFSET)
+
+    def y_out(y: int, shift: float) -> float:
+        """Recalculate source y to result y"""
+        return RESCALE * (y + shift + Y_OFFSET)
 
     resultfile.write('\n#declare thething = mesh {\n')  # Opening mesh object "thething"
 
@@ -279,27 +300,27 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             └───┴───┴───┘
             """
             v9 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
-            v1 = 0.25 * (v9 + src_lum(x - 1, y - 1) + src_lum(x, y - 1) + src_lum(x - 1, y))
-            v3 = 0.25 * (v9 + src_lum(x, y - 1) + src_lum(x + 1, y - 1) + src_lum(x + 1, y))
-            v5 = 0.25 * (v9 + src_lum(x + 1, y) + src_lum(x + 1, y + 1) + src_lum(x, y + 1))
-            v7 = 0.25 * (v9 + src_lum(x, y + 1) + src_lum(x - 1, y + 1) + src_lum(x - 1, y))
+            v1 = src_lum_blin(x - 0.5, y - 0.5)
+            v3 = src_lum_blin(x + 0.5, y - 0.5)
+            v5 = src_lum_blin(x + 0.5, y + 0.5)
+            v7 = src_lum_blin(x - 0.5, y + 0.5)
 
-            # finally going to build pyramid
+            # Finally going to build a pyramid!
 
             resultfile.write(
-                f'\n    triangle {{<{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v1})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v3})>}}'
+                f'\n    triangle {{<{x_out(x, -0.5)}, {y_out(y, -0.5)}, map({v1})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, 0.5)}, {y_out(y, -0.5)}, map({v3})>}}'
             )  # Triangle 2 1-9-3
 
             resultfile.write(
-                f'\n    triangle {{<{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v3})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v5})>}}'
+                f'\n    triangle {{<{x_out(x, 0.5)}, {y_out(y, -0.5)}, map({v3})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v5})>}}'
             )  # Triangle 4 3-9-5
 
             resultfile.write(
-                f'\n    triangle {{<{xRescale * (x + 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v5})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v7})>}}'
+                f'\n    triangle {{<{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v5})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, -0.5)}, {y_out(y, 0.5)}, map({v7})>}}'
             )  # Triangle 6 5-9-7
 
             resultfile.write(
-                f'\n    triangle {{<{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y + 0.5 + yOffset)}, map({zRescale * v7})> <{xRescale * (x + xOffset)}, {yRescale * (y + yOffset)}, map({zRescale * v9})> <{xRescale * (x - 0.5 + xOffset)}, {yRescale * (y - 0.5 + yOffset)}, map({zRescale * v1})>}}'
+                f'\n    triangle {{<{x_out(x, -0.5)}, {y_out(y, 0.5)}, map({v7})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, -0.5)}, {y_out(y, -0.5)}, map({v1})>}}'
             )  # Triangle 8 7-9-1
 
         # Pyramid construction complete. Ave me!
@@ -307,7 +328,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     resultfile.writelines(
         [
             '\n\n  inside_vector <0, 0, 1>\n\n',
-            f'//  clipped_by {{plane {{-z, -{zRescale}}}}}  // Variant of cropping baseline on minimal color step\n\n}}\n//    Closed thething\n\n',
+            f'//  clipped_by {{plane {{-z, {-1.0 / maxcolors}}}}}  // Variant of cropping baseline on minimal color step\n\n}}\n//    Closed thething\n\n',
         ]
     )  # Main object thething finished
 
