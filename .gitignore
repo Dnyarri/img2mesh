@@ -1,6 +1,6 @@
 __pycache__/
 .vscode/
 devel*
+old*
 temp/
-old/
 build/
