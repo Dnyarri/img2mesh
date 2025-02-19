@@ -1,10 +1,10 @@
 
-| 『✅EN』 | [RU](README.RU.md) |
+| 【EN】 | [〖RU〗](README.RU.md) |
 | ---- | ---- |
 
 # Bitmap to POVRay 3D triangle mesh converter
 
-Python program for conversion of bitmap heightfield (in [PNG format](http://www.libpng.org/pub/png/)) to 3D triangle mesh in [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
+Python program for conversion of bitmap heightfield (in [PNG](http://www.libpng.org/pub/png/) or [PGM/PPM](https://dnyarri.github.io/pypnm.html) format) to 3D triangle mesh in [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
 
 [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
 
@@ -18,13 +18,17 @@ Python program for conversion of bitmap heightfield (in [PNG format](http://www.
 
 - **img2mesh** - suitable GUI frontend comprising all programs and functions.
 
-- **img2pov** - Image to POV-Ray scene converter. Exported scene contains 3D mesh, bounding box (CSG intersection) to make it solid object with interior, camera and light. Textures are declared separately and easy to edit.
+- **list2mesh** module, including:
 
-- **img2obj** - Image to Wavefront OBJ converter. Exported file contains 3D mesh only.
+  - **list2pov**: nested 3D list to POV-Ray scene conversion and output. Exported file contain fully operational scene;
 
-- **img2dxf** - Image to Autodesk DXF converter. Exported file contains 3D mesh only.
+  - **list2stl**: nested 3D list to stereolithography ascii STL object conversion and output. Exported file contain elevation map mesh plus sides and bottom as needed for 3D printer;
 
-- **img2stl** - Image to STL converter. Exported file contain 3D mesh with side and bottom meshes necessary for 3D printer software.
+  - **list2obj**: nested 3D list to Wavefront OBJ conversion and output. Exported file contain elevation map mesh only;
+
+  - **list2dxf**: nested 3D list to Autodesk ascii DXF conversion and output Exported file contain elevation map mesh only;
+
+- **pypng** and **pypnm** modules contain components providing PNG and PPM image files reading as nested 3D lists.
 
 [![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)](https://dnyarri.github.io/img2mesh.html)
 
@@ -36,11 +40,11 @@ Python program for conversion of bitmap heightfield (in [PNG format](http://www.
 
 ## Installation and Usage
 
-Programs distribution is rather self-contained and is supposed to run right out of the box. Programs are equipped with minimal GUI, so all you have to do after starting a program is use "Open..." dialog to open image file, then use "Save..." to name exported file to be created, then wait while program does the job, then open resulting file with suitable 3D software and render the scene.
+Programs distribution is rather self-contained and is supposed to run right out of the box. Program is equipped with minimal GUI, so all you have to do after starting a program is use "Open..." dialog to open image file, then use "Export..." to name 3D file to be created, then wait while program does the job, then open resulting file with suitable 3D software and render the scene.
 
 ### For developers
 
-Module list2mesh, including 3D-export functions, may be copied and used by other developers.
+Module list2mesh, including 3D-export functions, may be copied and used by other developers at will.
 
 ## References
 

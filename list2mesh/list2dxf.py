@@ -6,26 +6,31 @@ IMG2DXF - Conversion of image heightfield to triangle mesh in Autodesk DXF forma
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
 
-Overview:
-----------
+Overview
+---------
 
 list2dxf present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in Autodesk DXF format.
 
-Usage:
--------
+Usage
+------
 
 `list2dxf.list2dxf(image3d, maxcolors, result_file_name)`
 
 where:
 
-`image3d` - image as list of lists of lists of int channel values.
+`image3d` - image as list of lists of lists of int channel values;
 
-`maxcolors` - maximum value of int in `image3d` list.
+`maxcolors` - maximum value of int in `image3d` list;
 
 `result_file_name` - name of DXF file to export.
 
-History:
----------
+Reference
+----------
+
+https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf
+
+History
+--------
 
 0.0.0.1     Development started 23 Aug 2024.
 
@@ -33,12 +38,14 @@ History:
 
 1.13.4.0    Rewritten from standalone img2dxf to module list2dxf.
 
+3.14.16.1   Mesh geometry completely changed.
+
 -------------------
 Main site:
 https://dnyarri.github.io
 
-Project mirrored at:
-https://github.com/Dnyarri/img2mesh; https://gitflic.ru/project/dnyarri/img2mesh
+Git repository:
+https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
 
@@ -46,7 +53,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '1.14.1.1'
+__version__ = '3.14.19.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -75,12 +82,14 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     def src(x: int | float, y: int | float, z: int) -> int | float:
         """
         Analog of src from FilterMeister, force repeat edge instead of out of range.
-        Returns int channel z value for pixel x, y
+        Returns channel z value for pixel x, y.
+
+        **WARNING:** Coordinate system mirrored against Y!
 
         """
 
         cx = int(x)
-        cy = int(y)  # nearest neighbor for float input
+        cy = int(Y - 1 - y)  # Mirroring from Photoshop to Wavefront
         cx = max(0, cx)
         cx = min((X - 1), cx)
         cy = max(0, cy)
@@ -90,22 +99,36 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         return channelvalue
 
-    # end of src function
+    def src_lum(x: int | float, y: int | float) -> float:
+        """Returns brightness of pixel x, y, multiplied on opacity if exists, normalized to 0..1 range."""
 
-    def src_lum(x: int | float, y: int | float) -> int | float:
-        """
-        Returns brightness of pixel x, y
-
-        """
-
-        if Z < 3:  # supposedly L and LA
+        if Z == 1:  # L
             yntensity = src(x, y, 0)
-        else:  # supposedly RGB and RGBA
-            yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
+        elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
+            yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
+        elif Z == 3:  # RGB
+            yntensity = 0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)
+        elif Z == 4:  # RGBA, multiply calculated L on A. A = 0 is transparent, a = maxcolors is opaque
+            yntensity = (0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
-        return yntensity
+        return yntensity / float(maxcolors)
 
-    # end of src_lum function
+    def src_lum_blin(x: float, y: float) -> float:
+        """Based on src_lum above, but returns bilinearly interpolated brightness of pixel x, y"""
+
+        fx = float(x)  # Force float input coordinates for interpolation
+        fy = float(y)
+
+        # Neighbor pixels coordinates (square corners x0,y0; x1,y0; x0,y1; x1,y1)
+        x0 = int(x)
+        x1 = x0 + 1
+        y0 = int(y)
+        y1 = y0 + 1
+
+        # Reading corners src_lum (see scr_lum above) and interpolating
+        channelvalue = src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
+
+        return channelvalue
 
     """ ╔══════════════════╗
         ║ Writing DXF file ║
@@ -113,26 +136,30 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # Global positioning and scaling to tweak.
 
-    xOffset = -0.5 * float(X - 1)  # To be added BEFORE rescaling to center object.
-    yOffset = -0.5 * float(Y - 1)  # To be added BEFORE rescaling to center object
-    zOffset = 0.0
+    X_OFFSET = -0.5 * (X - 1.0)  # To be added BEFORE rescaling to center object.
+    Y_OFFSET = -0.5 * (Y - 1.0)  # To be added BEFORE rescaling to center object
 
-    yRescale = xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
-    zRescale = 1.0 / float(maxcolors)
+    XY_RESCALE = 1.0 / (max(X, Y) - 1.0)  # To fit object into 1,1,1 cube
 
-    # WRITING DXF FILE, finally
-    # Based on specs at: https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf
+    def x_out(x: int, shift: float) -> float:
+        """Recalculate source x to result x"""
+        return XY_RESCALE * (x + shift + X_OFFSET)
+
+    def y_out(y: int, shift: float) -> float:
+        """Recalculate source y to result y"""
+        return XY_RESCALE * (y + shift + Y_OFFSET)
 
     resultfile = open(resultfilename, 'w')
 
     """ ┌────────────┐
         │ DXF header │
         └────────────┘ """
-
     resultfile.writelines(
         [
-            f'999\nGenerated by: {__file__} ver.: {__version__}\n0\nSECTION\n2\nHEADER\n0\nENDSEC\n0\n',
+            f'999\nGenerated by: {__name__} ver.: {__version__}\n0\nSECTION\n2\nHEADER\n0\nENDSEC\n0\n',
+
             'SECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n5\n0\nLAYER\n2\nPRYANIK\n70\n0\n62\n1\n6\nCONTINUOUS\n0\nENDTAB\n0\nENDSEC\n0\n',
+
             'SECTION\n2\nENTITIES\n0\n',
         ]
     )
@@ -143,63 +170,40 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # Now going to cycle through image and build mesh
 
-    for y in range(0, Y, 1):
-        for x in range(0, X, 1):
-            # Since I was unable to find clear declaration of coordinate system, I'll plug a coordinate switch here
+    for y in range(0, Y - 1, 1):
+        for x in range(0, X - 1, 1):
+            v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
+            v2 = src_lum(x + 1, y)
+            v3 = src_lum(x + 1, y + 1)
+            v4 = src_lum(x, y + 1)
+            v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
-            # Reading switch:
-            xRead = x
-            yRead = Y - 1 - y
-            # 'yRead = Y - y' coordinate mirror to mimic Photoshop coordinate system; +/- 1 steps below are inverted correspondingly vs. original img2mesh
+            # Finally going to build a pyramid!
 
-            # Remains of Writing switch. No longer used but var names remained so dummy plug must be here.
-            xWrite = x
-            yWrite = y
-
-            """Pyramid structure around default pixel 9.
-            Remember yRead = Y - 1 - y
-            ┌───┬───┬───┐
-            │ 1 │   │ 3 │
-            ├───┼───┼───┤
-            │   │ 9 │   │
-            ├───┼───┼───┤
-            │ 7 │   │ 5 │
-            └───┴───┴───┘
-            """
-            v9 = src_lum(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
-            v1 = 0.25 * (v9 + src_lum((xRead - 1), yRead) + src_lum((xRead - 1), (yRead + 1)) + src_lum(xRead, (yRead + 1)))
-            v3 = 0.25 * (v9 + src_lum(xRead, (yRead + 1)) + src_lum((xRead + 1), (yRead + 1)) + src_lum((xRead + 1), yRead))
-            v5 = 0.25 * (v9 + src_lum((xRead + 1), yRead) + src_lum((xRead + 1), (yRead - 1)) + src_lum(xRead, (yRead - 1)))
-            v7 = 0.25 * (v9 + src_lum(xRead, (yRead - 1)) + src_lum((xRead - 1), (yRead - 1)) + src_lum((xRead - 1), yRead))
-
-            # finally going to pyramid building
-
-            # top part begins
             resultfile.writelines(
                 [
-                    '3DFACE\n8\nPRYANIK\n',  # Opening triangle 2
-                    f'10\n{(xRescale * (xWrite - 0.5 + xOffset)):f}\n20\n{(yRescale * (yWrite - 0.5 + yOffset)):f}\n30\n{(zOffset + zRescale * v1):f}\n',
-                    f'11\n{(xRescale * (xWrite + xOffset)):f}\n21\n{(yRescale * (yWrite + yOffset)):f}\n31\n{(zOffset + zRescale * v9):f}\n',
-                    f'12\n{(xRescale * (xWrite + 0.5 + xOffset)):f}\n22\n{(yRescale * (yWrite - 0.5 + yOffset)):f}\n32\n{(zOffset + zRescale * v3):f}\n',
-                    '62\n0\n0\n',  # triangle 2
-                    '3DFACE\n8\nPRYANIK\n',  # Opening triangle 4
-                    f'10\n{(xRescale * (xWrite + 0.5 + xOffset)):f}\n20\n{(yRescale * (yWrite - 0.5 + yOffset)):f}\n30\n{(zOffset + zRescale * v3):f}\n',
-                    f'11\n{(xRescale * (xWrite + xOffset)):f}\n21\n{(yRescale * (yWrite + yOffset)):f}\n31\n{(zOffset + zRescale * v9):f}\n',
-                    f'12\n{(xRescale * (xWrite + 0.5 + xOffset)):f}\n22\n{(yRescale * (yWrite + 0.5 + yOffset)):f}\n32\n{(zOffset + zRescale * v5):f}\n',
-                    '62\n0\n0\n',  # triangle 4
-                    '3DFACE\n8\nPRYANIK\n',  # Opening triangle 6
-                    f'10\n{(xRescale * (xWrite + 0.5 + xOffset)):f}\n20\n{(yRescale * (yWrite + 0.5 + yOffset)):f}\n30\n{(zOffset + zRescale * v5):f}\n',
-                    f'11\n{(xRescale * (xWrite + xOffset)):f}\n21\n{(yRescale * (yWrite + yOffset)):f}\n31\n{(zOffset + zRescale * v9):f}\n',
-                    f'12\n{(xRescale * (xWrite - 0.5 + xOffset)):f}\n22\n{(yRescale * (yWrite + 0.5 + yOffset)):f}\n32\n{(zOffset + zRescale * v7):f}\n',
-                    '62\n0\n0\n',  # triangle 6
-                    '3DFACE\n8\nPRYANIK\n',  # Opening triangle 8
-                    f'10\n{(xRescale * (xWrite - 0.5 + xOffset)):f}\n20\n{(yRescale * (yWrite + 0.5 + yOffset)):f}\n30\n{(zOffset + zRescale * v7):f}\n',
-                    f'11\n{(xRescale * (xWrite + xOffset)):f}\n21\n{(yRescale * (yWrite + yOffset)):f}\n31\n{(zOffset + zRescale * v9):f}\n',
-                    f'12\n{(xRescale * (xWrite - 0.5 + xOffset)):f}\n22\n{(yRescale * (yWrite - 0.5 + yOffset)):f}\n32\n{(zOffset + zRescale * v1):f}\n',
-                    '62\n0\n0\n',  # triangle 8
+                    '3DFACE\n8\nPRYANIK\n',
+                    f'10\n{x_out(x, 0)}\n20\n{y_out(y, 0)}\n30\n{v1}\n',
+                    f'11\n{x_out(x, 1)}\n21\n{y_out(y, 0)}\n31\n{v2}\n',
+                    f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
+                    '62\n0\n0\n',  # triangle 1-2-0
+                    '3DFACE\n8\nPRYANIK\n',
+                    f'10\n{x_out(x, 1)}\n20\n{y_out(y, 0)}\n30\n{v2}\n',
+                    f'11\n{x_out(x, 1)}\n21\n{y_out(y, 1)}\n31\n{v3}\n',
+                    f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
+                    '62\n0\n0\n',  # triangle 2-3-0
+                    '3DFACE\n8\nPRYANIK\n',
+                    f'10\n{x_out(x, 1)}\n20\n{y_out(y, 1)}\n30\n{v3}\n',
+                    f'11\n{x_out(x, 0)}\n21\n{y_out(y, 1)}\n31\n{v4}\n',
+                    f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
+                    '62\n0\n0\n',  # triangle 3-4-0
+                    '3DFACE\n8\nPRYANIK\n',
+                    f'10\n{x_out(x, 0)}\n20\n{y_out(y, 1)}\n30\n{v4}\n',
+                    f'11\n{x_out(x, 0)}\n21\n{y_out(y, 0)}\n31\n{v1}\n',
+                    f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
+                    '62\n0\n0\n',  # triangle 4-1-0
                 ]
-            )
-            # top part ends
+            )  # Pyramid construction complete. Ave me!
 
     resultfile.write('ENDSEC\n0\nEOF\n')  # closing object
 

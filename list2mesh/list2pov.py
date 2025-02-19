@@ -18,35 +18,38 @@ Usage
 
 where:
 
-`image3d`: image as list of lists of lists of int channel values.
+`image3d`: image as list of lists of lists of int channel values;
 
-`maxcolors`: maximum value of int in `image3d` list.
+`maxcolors`: maximum value of int in `image3d` list;
 
 `result_file_name`: name of POV-Ray file to export.
+
+Reference
+----------
+
+https://www.povray.org/documentation/view/3.7.1/292/
 
 History
 --------
 
-0.0.1.0     Initial standalone img2mesh version with 2x2 folding mesh, Dec 2023.  
-0.0.2.0     Switched to 1x4 pyramid mesh, Jan 2024.  
-0.0.5.0     Replaced Pillow I/O with PyPNG from: https://gitlab.com/drj11/pypng, providing 16 bit/channel PNGs support.  
-0.0.7.0     Standalone img2mesh stable.  
-2.7.1.0     Significant code cleanup with .writelines. Versioning more clear.  
-2.8.0.0     Total rewrite to remove all transforms from POV-Ray.  
-2.8.2.1     Internal brightness map transfer function added. Finally it can be adjusted nondestructively within POV-Ray instead of re-editing in Photoshop or GIMP and re-exporting every time.  
-2.8.2.5     Arbitrary decision to replace all maps with one arbitrary spline.  
-2.8.3.0     Rewritten to fully match Photoshop coordinate system. Important changes in camera, handle with care!  
-2.9.1.0     POV export changed, light and textures improved, whole product update. Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion  
-2.13.4.0    Exported file may be used both as scene and as include.  
-2.13.4.1    Rewritten from standalone img2pov to module list2pov.  
-2.14.14.2   LAST RELEASE OF v2. Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.  
+0.0.1.0     Initial standalone img2mesh version with 2x2 folding mesh, Dec 2023.
+
+0.0.2.0     Switched to 1x4 pyramid mesh, Jan 2024.
+
+0.0.7.0     Standalone img2mesh stable.
+
+2.9.1.0     Total rewrite to remove all transforms from POV-Ray. Internal brightness map transfer function added; finally it can be adjusted nondestructively within POV-Ray instead of re-editing in Photoshop or GIMP and re-exporting every time. Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+
+2.14.14.2   LAST RELEASE OF v2. Rewritten from standalone img2pov to module list2pov. Exported file may be used both as scene and as include. Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.
+
+3.14.15.1   Mesh geometry completely changed.
 
 -------------------
-Main site:  
-https://dnyarri.github.io  
+Main site:
+https://dnyarri.github.io
 
-Project mirrored at:  
-https://github.com/Dnyarri/img2mesh; https://gitflic.ru/project/dnyarri/img2mesh  
+Git repository:
+https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
 
@@ -54,7 +57,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '2.14.14.2'
+__version__ = '3.14.19.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -65,9 +68,9 @@ from time import ctime, time
 def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str) -> None:
     """Convert nested 3D list of X, Y, Z coordinates to POV heightfield triangle mesh.
 
-    `image3d`: image as list of lists of lists of int channel values.
+    `image3d`: image as list of lists of lists of int channel values;
 
-    `maxcolors`: maximum value of int in `image3d` list.
+    `maxcolors`: maximum value of int in `image3d` list;
 
     `resultfilename`: name of POV-Ray file to export.
 
@@ -127,9 +130,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         y1 = y0 + 1
 
         # Reading corners src_lum (see scr_lum above) and interpolating
-        channelvalue = (
-            src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
-        )
+        channelvalue = src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
 
         return channelvalue
 
@@ -272,58 +273,48 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     X_OFFSET = -0.5 * (X - 1.0)  # To be added BEFORE rescaling to center object.
     Y_OFFSET = -0.5 * (Y - 1.0)  # To be added BEFORE rescaling to center object
 
-    RESCALE = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
+    XY_RESCALE = 1.0 / (max(X, Y) - 1.0)  # To fit object into 1,1,1 cube
 
     def x_out(x: int, shift: float) -> float:
         """Recalculate source x to result x"""
-        return RESCALE * (x + shift + X_OFFSET)
+        return XY_RESCALE * (x + shift + X_OFFSET)
 
     def y_out(y: int, shift: float) -> float:
         """Recalculate source y to result y"""
-        return RESCALE * (y + shift + Y_OFFSET)
+        return XY_RESCALE * (y + shift + Y_OFFSET)
 
     resultfile.write('\n#declare thething = mesh {\n')  # Opening mesh object "thething"
 
     # Now going to cycle through image and build mesh
 
-    for y in range(0, Y, 1):
+    for y in range(0, Y - 1, 1):  # Mesh includes extra pixels at the right and below, therefore -1
         resultfile.write(f'\n\n   // Row {y}\n')
 
-        for x in range(0, X, 1):
-            """Pyramid structure around default pixel 9.
-            ┌───┬───┬───┐
-            │ 1 │   │ 3 │
-            ├───┼───┼───┤
-            │   │ 9 │   │
-            ├───┼───┼───┤
-            │ 7 │   │ 5 │
-            └───┴───┴───┘
+        for x in range(0, X - 1, 1):  # Mesh includes extra pixels at the right and below, therefore -1
+            """Pixel order around default pixel 1.
+            ┌───┬───┐
+            │ 1 │ 2 │
+            ├───┼───┤
+            │ 4 │ 3 │
+            └───┴───┘
             """
-            v9 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
-            v1 = src_lum_blin(x - 0.5, y - 0.5)
-            v3 = src_lum_blin(x + 0.5, y - 0.5)
-            v5 = src_lum_blin(x + 0.5, y + 0.5)
-            v7 = src_lum_blin(x - 0.5, y + 0.5)
+            v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
+            v2 = src_lum(x + 1, y)
+            v3 = src_lum(x + 1, y + 1)
+            v4 = src_lum(x, y + 1)
+            v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
             # Finally going to build a pyramid!
 
-            resultfile.write(
-                f'\n    triangle {{<{x_out(x, -0.5)}, {y_out(y, -0.5)}, map({v1})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, 0.5)}, {y_out(y, -0.5)}, map({v3})>}}'
-            )  # Triangle 2 1-9-3
+            resultfile.write(f'\n    triangle {{<{x_out(x, 0)}, {y_out(y, 0)}, map({v1})> <{x_out(x, 1)}, {y_out(y, 0)}, map({v2})> <{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v0})>}}')  # Triangle 1-2-0
 
-            resultfile.write(
-                f'\n    triangle {{<{x_out(x, 0.5)}, {y_out(y, -0.5)}, map({v3})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v5})>}}'
-            )  # Triangle 4 3-9-5
+            resultfile.write(f'\n    triangle {{<{x_out(x, 1)}, {y_out(y, 0)}, map({v2})> <{x_out(x, 1)}, {y_out(y, 1)}, map({v3})> <{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v0})>}}')  # Triangle 2-3-0
 
-            resultfile.write(
-                f'\n    triangle {{<{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v5})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, -0.5)}, {y_out(y, 0.5)}, map({v7})>}}'
-            )  # Triangle 6 5-9-7
+            resultfile.write(f'\n    triangle {{<{x_out(x, 1)}, {y_out(y, 1)}, map({v3})> <{x_out(x, 0)}, {y_out(y, 1)}, map({v4})> <{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v0})>}}')  # Triangle 3-4-0
 
-            resultfile.write(
-                f'\n    triangle {{<{x_out(x, -0.5)}, {y_out(y, 0.5)}, map({v7})> <{x_out(x, 0.0)}, {y_out(y, 0.0)}, map({v9})> <{x_out(x, -0.5)}, {y_out(y, -0.5)}, map({v1})>}}'
-            )  # Triangle 8 7-9-1
+            resultfile.write(f'\n    triangle {{<{x_out(x, 0)}, {y_out(y, 1)}, map({v4})> <{x_out(x, 0)}, {y_out(y, 0)}, map({v1})> <{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v0})>}}')  # Triangle 4-1-0
 
-        # Pyramid construction complete. Ave me!
+            # Pyramid construction complete. Ave me!
 
     resultfile.writelines(
         [
@@ -341,7 +332,8 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             '\n#ifndef (Main)  // Include check 3\n\n',
             '#declare boxedthing = object {\n',
             '  intersection {\n',
-            '    box {<-0.5, -0.5, 0>, <0.5, 0.5, 1.0>\n',
+            '    box {<-0.5, -0.5, 0>, <0.5, 0.5, 1.1>\n',
+            '    // Beware of round-off errors when rescaling: bounding box may hit thething!\n',
             '          pigment {rgb <0.5, 0.5, 5>}\n',
             '        }\n',
             '    object {thething texture {thething_texture}}\n',
@@ -352,9 +344,9 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             '\n#end  // End include check 3\n\n',
             '\n/*\n\nhappy rendering\n\n  0~0\n (---)\n(.>|<.)\n-------\n\n*/',
         ]
-    )  # Closing solids
+    )  # Closing scene
 
-    # Close output
+    # Close output file
     resultfile.close()
 
     return None

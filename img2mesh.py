@@ -11,12 +11,14 @@ History:
 
 2.13.13.2   Previous version of img2mesh GUI replaced with completely new joint (PyPNG, PyPNM) ➔ (list2pov, list2obj, list2stl, list2dxf) program with the same name.
 
+3.14.16.1   list2pov upgraded to version 3 with improved geometry.
+
 -------------------
 Main site:
 https://dnyarri.github.io
 
-Project mirrored at:
-https://github.com/Dnyarri/img2mesh; https://gitflic.ru/project/dnyarri/img2mesh
+Git repository:
+https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
 
@@ -24,7 +26,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '2.14.14.2'
+__version__ = '3.14.19.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'

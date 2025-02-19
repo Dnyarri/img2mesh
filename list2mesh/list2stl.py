@@ -6,26 +6,31 @@ IMG2STL - Conversion of image heightfield to triangle mesh in stereolithography 
 
 Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
 
-Overview:
-----------
+Overview
+---------
 
 list2stl present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in stereolithography STL format.
 
-Usage:
--------
+Usage
+------
 
 `list2stl.list2stl(image3d, maxcolors, result_file_name)`
 
 where:
 
-`image3d` - image as list of lists of lists of int channel values.
+`image3d` - image as list of lists of lists of int channel values;
 
-`maxcolors` - maximum value of int in `image3d` list.
+`maxcolors` - maximum value of int in `image3d` list;
 
 `result_file_name` - name of STL file to export.
 
-History:
----------
+Reference
+----------
+
+https://www.fabbers.com/tech/STL_Format
+
+History
+--------
 
 1.0.0.0     Initial production release.
 
@@ -33,12 +38,14 @@ History:
 
 1.13.4.0    Rewritten from standalone img2stl to module list2stl.
 
+3.14.16.1   Mesh geometry completely changed.
+
 -------------------
 Main site:
 https://dnyarri.github.io
 
-Project mirrored at:
-https://github.com/Dnyarri/img2mesh; https://gitflic.ru/project/dnyarri/img2mesh
+Git repository:
+https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
 
@@ -46,7 +53,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '1.14.1.1'
+__version__ = '3.14.19.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -55,9 +62,9 @@ __status__ = 'Production'
 def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str) -> None:
     """Converting nested 3D list to STL heightfield triangle mesh.
 
-    `image3d` - image as list of lists of lists of int channel values.
+    `image3d` - image as list of lists of lists of int channel values;
 
-    `maxcolors` - maximum value of int in `image3d` list.
+    `maxcolors` - maximum value of int in `image3d` list;
 
     `resultfilename` - name of STL file to export.
 
@@ -75,12 +82,14 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     def src(x: int | float, y: int | float, z: int) -> int | float:
         """
         Analog of src from FilterMeister, force repeat edge instead of out of range.
-        Returns int channel z value for pixel x, y
+        Returns channel z value for pixel x, y.
+
+        **WARNING:** Coordinate system mirrored against Y!
 
         """
 
         cx = int(x)
-        cy = int(y)  # nearest neighbor for float input
+        cy = int(Y - 1 - y)  # Mirroring from Photoshop to Wavefront
         cx = max(0, cx)
         cx = min((X - 1), cx)
         cy = max(0, cy)
@@ -90,22 +99,36 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         return channelvalue
 
-    # end of src function
+    def src_lum(x: int | float, y: int | float) -> float:
+        """Returns brightness of pixel x, y, multiplied on opacity if exists, normalized to 0..1 range."""
 
-    def src_lum(x: int | float, y: int | float) -> int | float:
-        """
-        Returns brightness of pixel x, y
-
-        """
-
-        if Z < 3:  # supposedly L and LA
+        if Z == 1:  # L
             yntensity = src(x, y, 0)
-        else:  # supposedly RGB and RGBA
-            yntensity = int(0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2))
+        elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
+            yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
+        elif Z == 3:  # RGB
+            yntensity = 0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)
+        elif Z == 4:  # RGBA, multiply calculated L on A. A = 0 is transparent, a = maxcolors is opaque
+            yntensity = (0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
-        return yntensity
+        return yntensity / float(maxcolors)
 
-    # end of src_lum function
+    def src_lum_blin(x: float, y: float) -> float:
+        """Based on src_lum above, but returns bilinearly interpolated brightness of pixel x, y"""
+
+        fx = float(x)  # Force float input coordinates for interpolation
+        fy = float(y)
+
+        # Neighbor pixels coordinates (square corners x0,y0; x1,y0; x0,y1; x1,y1)
+        x0 = int(x)
+        x1 = x0 + 1
+        y0 = int(y)
+        y1 = y0 + 1
+
+        # Reading corners src_lum (see scr_lum above) and interpolating
+        channelvalue = src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
+
+        return channelvalue
 
     """ ╔══════════════════╗
         ║ Writing STL file ║
@@ -113,85 +136,68 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # Global positioning and scaling to tweak. Offset supposed to make everyone feeling positive, rescale supposed to scale anything to [0..1.0] regardless of what the units are
 
-    xOffset = 1.0  # To be added BEFORE rescaling to compensate 0.5 X expansion
-    yOffset = 1.0  # To be added BEFORE rescaling to compensate 0.5 Y expansion
-    zOffset = 0.0  # To be added AFTER rescaling just in case there should be something to fix
+    X_OFFSET = Y_OFFSET = 1.0
 
-    yRescale = xRescale = 1.0 / float(max(X, Y))  # To fit object into 1,1,1 cube
-    zRescale = 1.0 / float(maxcolors)
+    XY_RESCALE = 1.0 / (max(X, Y) - 1.0)  # To fit object into 1,1,1 cube
+
+    def x_out(x: int, shift: float) -> float:
+        """Recalculate source x to result x"""
+        return XY_RESCALE * (x + shift + X_OFFSET)
+
+    def y_out(y: int, shift: float) -> float:
+        """Recalculate source y to result y"""
+        return XY_RESCALE * (y + shift + Y_OFFSET)
 
     resultfile = open(resultfilename, 'w')
 
     """ ┌────────────┐
         │ STL header │
         └────────────┘ """
-
     resultfile.write('solid pryanik_nepechatnyj\n')  # opening object
 
     """ ┌──────┐
         │ Mesh │
         └──────┘ """
 
-    for y in range(0, Y, 1):
-        for x in range(0, X, 1):
-            # Since I was unable to find clear declaration of coordinate system, I'll plug a coordinate switch here
+    for y in range(0, Y - 1, 1):
+        for x in range(0, X - 1, 1):
+            v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
+            v2 = src_lum(x + 1, y)
+            v3 = src_lum(x + 1, y + 1)
+            v4 = src_lum(x, y + 1)
+            v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
-            # Reading switch:
-            xRead = x
-            yRead = Y - 1 - y
-            # 'yRead = Y - y' coordinate mirror to mimic Photoshop coordinate system; +/- 1 steps below are inverted correspondingly vs. original img2mesh
-
-            # Remains of Writing switch. No longer used since v. 0.1.0.2 but var names remained so dummy plug must be here.
-            xWrite = x
-            yWrite = y
-
-            """Pyramid structure around default pixel 9.
-            Remember yRead = Y - 1 - y
-            ┌───┬───┬───┐
-            │ 1 │   │ 3 │
-            ├───┼───┼───┤
-            │   │ 9 │   │
-            ├───┼───┼───┤
-            │ 7 │   │ 5 │
-            └───┴───┴───┘
-            """
-            v9 = src_lum(xRead, yRead)  # Current pixel to process and write. Then going to neighbours
-            v1 = 0.25 * (v9 + src_lum((xRead - 1), yRead) + src_lum((xRead - 1), (yRead + 1)) + src_lum(xRead, (yRead + 1)))
-            v3 = 0.25 * (v9 + src_lum(xRead, (yRead + 1)) + src_lum((xRead + 1), (yRead + 1)) + src_lum((xRead + 1), yRead))
-            v5 = 0.25 * (v9 + src_lum((xRead + 1), yRead) + src_lum((xRead + 1), (yRead - 1)) + src_lum(xRead, (yRead - 1)))
-            v7 = 0.25 * (v9 + src_lum(xRead, (yRead - 1)) + src_lum((xRead - 1), (yRead - 1)) + src_lum((xRead - 1), yRead))
-
-            # finally going to pyramid building
+            # Finally going to build a pyramid!
 
             # top part begins
             resultfile.writelines(
                 [
-                    '   facet normal 0 0 1\n',  # triangle 2 normal up
-                    '       outer loop\n',  # 1 - 9 - 3
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v1):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + zRescale * v9):e}\n',
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v3):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
-                    '   facet normal 0 0 1\n',  # triangle 4 normal up
-                    '       outer loop\n',  # 3 - 9 - 5
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v3):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + zRescale * v9):e}\n',
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v5):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
-                    '   facet normal 0 0 1\n',  # triangle 6 normal up
-                    '       outer loop\n',  # 5 - 9 - 7
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v5):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + zRescale * v9):e}\n',
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v7):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
-                    '   facet normal 0 0 1\n',  # triangle 8 normal up
-                    '       outer loop\n',  # 7 - 9 - 1
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v7):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + zRescale * v9):e}\n',
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v1):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
                 ]
@@ -202,18 +208,18 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             if x == 0:
                 resultfile.writelines(
                     [
-                        '   facet normal -1 0 0\n',  # triangle 8- normal left
-                        '       outer loop\n',  # 1 - down1 - 7
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v1):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v7):e}\n',
+                        '   facet normal -1 0 0\n',
+                        '       outer loop\n',  # 1 - down 1b - 4b
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
-                        '   facet normal -1 0 0\n',  # triangle 8- normal left
-                        '       outer loop\n',  # down1 - down7 - 7
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v7):e}\n',
+                        '   facet normal -1 0 0\n',
+                        '       outer loop\n',  # 4b - up 4 - 1
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -221,21 +227,21 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # left side ends
 
             # right side begins
-            if x == (X - 1):
+            if x == (X - 2):
                 resultfile.writelines(
                     [
-                        '   facet normal 1 0 0\n',  # triangle 4+ normal left
-                        '       outer loop\n',  # 5 - down5 - 3
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v5):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v3):e}\n',
+                        '   facet normal 1 0 0\n',
+                        '       outer loop\n',  # 3 - down 3b - 2b
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
-                        '   facet normal 1 0 0\n',  # triangle 4+ normal left
-                        '       outer loop\n',  # 3 - down5 - down3
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v3):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
+                        '   facet normal 1 0 0\n',
+                        '       outer loop\n',  # 2b - up 2 - 3
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -246,18 +252,18 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             if y == 0:
                 resultfile.writelines(
                     [
-                        '   facet normal 0 -1 0\n',  # triangle 2- normal far
-                        '       outer loop\n',  # 3 - down - 1
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v3):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v1):e}\n',
+                        '   facet normal 0 -1 0\n',
+                        '       outer loop\n',  # 2 - down 2b - 1b
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
-                        '   facet normal 0 -1 0\n',  # triangle 2- normal far
-                        '       outer loop\n',  # down - down - 1
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + zRescale * v1):e}\n',
+                        '   facet normal 0 -1 0\n',
+                        '       outer loop\n',  # 1b - 1 - 2
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -265,21 +271,21 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # far side ends
 
             # close side begins
-            if y == (Y - 1):
+            if y == (Y - 2):
                 resultfile.writelines(
                     [
-                        '   facet normal 0 1 0\n',  # triangle 6+ normal close
-                        '       outer loop\n',  # 7 - down - 5
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v7):e}\n',
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v5):e}\n',
+                        '   facet normal 0 1 0\n',
+                        '       outer loop\n',  # 4 - down 4b - 3b
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
-                        '   facet normal 0 1 0\n',  # triangle 6+ normal close
-                        '       outer loop\n',  # down - down - 5
-                        f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                        f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + zRescale * v5):e}\n',
+                        '   facet normal 0 1 0\n',
+                        '       outer loop\n',  # 3b - up 3 - 4
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
+                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
+                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -289,32 +295,32 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # bottom part begins
             resultfile.writelines(
                 [
-                    '   facet normal 0 0 -1\n',  # triangle 2 normal up
-                    '       outer loop\n',  # 1 - 9 - 3
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
-                    '   facet normal 0 0 -1\n',  # triangle 4 normal up
-                    '       outer loop\n',  # 3 - 9 - 5
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
-                    '   facet normal 0 0 -1\n',  # triangle 6 normal up
-                    '       outer loop\n',  # 5 - 9 - 7
-                    f'           vertex {(xRescale * (xWrite + 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
+                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
-                    '   facet normal 0 0 -1\n',  # triangle 8 normal up
-                    '       outer loop\n',  # 7 - 9 - 1
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite + 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite + xOffset)):e} {(yRescale * (yWrite + yOffset)):e} {(zOffset + 0.0):e}\n',
-                    f'           vertex {(xRescale * (xWrite - 0.5 + xOffset)):e} {(yRescale * (yWrite - 0.5 + yOffset)):e} {(zOffset + 0.0):e}\n',
+                    '   facet normal 0 0 1\n',
+                    '       outer loop\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
                     '       endloop\n',
                     '   endfacet\n',
                 ]
