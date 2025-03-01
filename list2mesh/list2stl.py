@@ -4,12 +4,13 @@
 IMG2STL - Conversion of image heightfield to triangle mesh in stereolithography STL format
 -------------------------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
 
 Overview
 ---------
 
-list2stl present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in stereolithography STL format.
+list2stl present function for converting image-like nested X,Y,Z int lists to
+3D triangle mesh height field in stereolithography STL format.
 
 Usage
 ------
@@ -24,10 +25,12 @@ where:
 
 `result_file_name` - name of STL file to export.
 
-Reference
-----------
+References
+-----------
 
-https://www.fabbers.com/tech/STL_Format
+`Cătălin IANCU et al., From CAD model to 3D print via “STL” file format<https://www.utgjiu.ro/rev_mec/mecanica/pdf/2010-01/13_Catalin%20Iancu.pdf>`_.
+
+`Marshall Burns, Automated Fabrication, Section 6.5<https://www.fabbers.com/tech/STL_Format>`_.
 
 History
 --------
@@ -41,11 +44,10 @@ History
 3.14.16.1   Mesh geometry completely changed.
 
 -------------------
-Main site:
-https://dnyarri.github.io
+Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
-Git repository:
-https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
+Git repositories:
+`Main at Github <https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -53,7 +55,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.14.19.10'
+__version__ = '3.15.01.20'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -107,9 +109,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
-            yntensity = 0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L on A. A = 0 is transparent, a = maxcolors is opaque
-            yntensity = (0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)) * src(x, y, 3) / maxcolors
+            yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
+        elif Z == 4:  # RGBA, multiply calculated L on A.
+            yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
         return yntensity / float(maxcolors)
 
@@ -159,8 +161,8 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         │ Mesh │
         └──────┘ """
 
-    for y in range(0, Y - 1, 1):
-        for x in range(0, X - 1, 1):
+    for y in range(Y - 1):
+        for x in range(X - 1):
             v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
             v2 = src_lum(x + 1, y)
             v3 = src_lum(x + 1, y + 1)
@@ -168,6 +170,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
             # Finally going to build a pyramid!
+            # Triangles are described counterclockwise.
 
             # top part begins
             resultfile.writelines(

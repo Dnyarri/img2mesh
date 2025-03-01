@@ -4,12 +4,13 @@
 IMG2POV - Conversion of image heightfield to triangle mesh in POV-Ray format
 -----------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
 
 Overview
 ---------
 
-`list2pov` present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in POV-Ray format.
+`list2pov` present function for converting image-like nested X,Y,Z int lists to
+3D triangle mesh height field in POV-Ray format.
 
 Usage
 ------
@@ -27,7 +28,7 @@ where:
 Reference
 ----------
 
-https://www.povray.org/documentation/view/3.7.1/292/
+`POV-Ray Documentation, Section 2.4.2.3 Mesh<https://www.povray.org/documentation/view/3.7.1/292/>`_.
 
 History
 --------
@@ -38,18 +39,24 @@ History
 
 0.0.7.0     Standalone img2mesh stable.
 
-2.9.1.0     Total rewrite to remove all transforms from POV-Ray. Internal brightness map transfer function added; finally it can be adjusted nondestructively within POV-Ray instead of re-editing in Photoshop or GIMP and re-exporting every time. Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+2.9.1.0     Total rewrite to remove all transforms from POV-Ray.
+Internal brightness map transfer function added;
+finally it can be adjusted nondestructively within POV-Ray instead of re-editing
+in Photoshop or GIMP and re-exporting every time.
+Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 
-2.14.14.2   LAST RELEASE OF v2. Rewritten from standalone img2pov to module list2pov. Exported file may be used both as scene and as include. Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.
+2.14.14.2   LAST RELEASE OF v2.
+Rewritten from standalone img2pov to module list2pov.
+Exported file may be used both as scene and as include.
+Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.
 
 3.14.15.1   Mesh geometry completely changed.
 
 -------------------
-Main site:
-https://dnyarri.github.io
+Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
-Git repository:
-https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
+Git repositories:
+`Main at Github <https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -57,7 +64,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.14.23.18'
+__version__ = '3.15.01.20'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -111,9 +118,9 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
-            yntensity = 0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L on A. A = 0 is transparent, a = maxcolors is opaque
-            yntensity = (0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)) * src(x, y, 3) / maxcolors
+            yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
+        elif Z == 4:  # RGBA, multiply calculated L on A.
+            yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
         return yntensity / float(maxcolors)
 
@@ -306,10 +313,10 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # Now going to cycle through image and build mesh
 
-    for y in range(0, Y - 1, 1):  # Mesh includes extra pixels at the right and below, therefore -1
+    for y in range(Y - 1):  # Mesh includes extra pixels at the right and below, therefore -1
         resultfile.write(f'\n\n   // Row {y}\n')
 
-        for x in range(0, X - 1, 1):  # Mesh includes extra pixels at the right and below, therefore -1
+        for x in range(X - 1):  # Mesh includes extra pixels at the right and below, therefore -1
             """Pixel order around default pixel 1.
             ┌───┬───┐
             │ 1 │ 2 │
@@ -324,6 +331,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
             # Finally going to build a pyramid!
+            # Triangles are described clockwise.
 
             resultfile.write(f'\n    triangle {{<{x_out(x, 0)}, {y_out(y, 0)}, map({v1})> <{x_out(x, 1)}, {y_out(y, 0)}, map({v2})> <{x_out(x, 0.5)}, {y_out(y, 0.5)}, map({v0})>}}')  # Triangle 1-2-0
 

@@ -4,12 +4,13 @@
 IMG2OBJ - Conversion of image heightfield to triangle mesh in Wavefront OBJ format
 -----------------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
 
 Overview
 ---------
 
-list2obj present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in Wavefront OBJ format.
+list2obj present function for converting image-like nested X,Y,Z int lists to
+3D triangle mesh height field in Wavefront OBJ format.
 
 Usage
 ------
@@ -27,25 +28,25 @@ where:
 Reference
 ----------
 
-https://paulbourke.net/dataformats/obj/obj_spec.pdf
+`B1. Object Files (.obj)<https://paulbourke.net/dataformats/obj/obj_spec.pdf>`_.
 
 History
 --------
 
 1.0.0.0     Initial production release.
 
-1.9.1.0     Multiple changes lead to whole product update. Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+1.9.1.0     Multiple changes lead to whole product update.
+Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 
 1.13.4.0    Rewritten from standalone img2obj to module list2obj.
 
 3.14.15.1   Mesh geometry completely changed.
 
 -------------------
-Main site:
-https://dnyarri.github.io
+Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
-Git repository:
-https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
+Git repositories:
+`Main at Github <https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -53,7 +54,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.14.19.10'
+__version__ = '3.15.01.20'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -107,9 +108,9 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
-            yntensity = 0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L on A. A = 0 is transparent, a = maxcolors is opaque
-            yntensity = (0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)) * src(x, y, 3) / maxcolors
+            yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
+        elif Z == 4:  # RGBA, multiply calculated L on A.
+            yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
         return yntensity / float(maxcolors)
 
@@ -162,8 +163,8 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         │ Mesh │
         └──────┘ """
 
-    for y in range(0, Y - 1, 1):
-        for x in range(0, X - 1, 1):
+    for y in range(Y - 1):
+        for x in range(X - 1):
             v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
             v2 = src_lum(x + 1, y)
             v3 = src_lum(x + 1, y + 1)
@@ -171,26 +172,26 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
             # Finally going to build a pyramid!
+            # Triangles are described clockwise, then connection order reset counterclockwise.
 
             resultfile.writelines(
                 [
                     f'v {x_out(x, 0)} {y_out(y, 0)} {v1}\n',
                     f'v {x_out(x, 1)} {y_out(y, 0)} {v2}\n',
                     f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
-                    'f -2 -3 -1\n',
-                    # triangle 1-2-0, order changed to counterclocwise that means normal up
+                    'f -2 -3 -1\n',  # triangle 1-2-0, order changed to counterclockwise that means normal up
                     f'v {x_out(x, 1)} {y_out(y, 0)} {v2}\n',
                     f'v {x_out(x, 1)} {y_out(y, 1)} {v3}\n',
                     f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
-                    'f -2 -3 -1\n',  # triangle 2-3-0
+                    'f -2 -3 -1\n',  # triangle 2-3-0, order changed to counterclockwise
                     f'v {x_out(x, 1)} {y_out(y, 1)} {v3}\n',
                     f'v {x_out(x, 0)} {y_out(y, 1)} {v4}\n',
                     f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
-                    'f -2 -3 -1\n',  # triangle 3-4-0
+                    'f -2 -3 -1\n',  # triangle 3-4-0, order changed to counterclockwise
                     f'v {x_out(x, 0)} {y_out(y, 1)} {v4}\n',
                     f'v {x_out(x, 0)} {y_out(y, 0)} {v1}\n',
                     f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
-                    'f -2 -3 -1\n',  # triangle 4-1-0
+                    'f -2 -3 -1\n',  # triangle 4-1-0, order changed to counterclockwise
                 ]
             )  # Pyramid construction complete. Ave me!
 

@@ -4,12 +4,13 @@
 IMG2DXF - Conversion of image heightfield to triangle mesh in Autodesk DXF format
 -----------------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
 
 Overview
 ---------
 
-list2dxf present function for converting image-like nested X,Y,Z int lists to 3D triangle mesh height field in Autodesk DXF format.
+list2dxf present function for converting image-like nested X,Y,Z int lists to
+3D triangle mesh height field in Autodesk DXF format.
 
 Usage
 ------
@@ -27,25 +28,25 @@ where:
 Reference
 ----------
 
-https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf
+`AutoCAD 2012 DXF Reference, p. 64<https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf>`_.
 
 History
 --------
 
 0.0.0.1     Development started 23 Aug 2024.
 
-1.9.1.0     First production release. Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+1.9.1.0     First production release.
+Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 
 1.13.4.0    Rewritten from standalone img2dxf to module list2dxf.
 
 3.14.16.1   Mesh geometry completely changed.
 
 -------------------
-Main site:
-https://dnyarri.github.io
+Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
-Git repository:
-https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
+Git repositories:
+`Main at Github <https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -53,7 +54,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.14.19.10'
+__version__ = '3.15.01.20'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -107,9 +108,9 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
-            yntensity = 0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L on A. A = 0 is transparent, a = maxcolors is opaque
-            yntensity = (0.2989 * src(x, y, 0) + 0.587 * src(x, y, 1) + 0.114 * src(x, y, 2)) * src(x, y, 3) / maxcolors
+            yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
+        elif Z == 4:  # RGBA, multiply calculated L on A.
+            yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
         return yntensity / float(maxcolors)
 
@@ -170,8 +171,8 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # Now going to cycle through image and build mesh
 
-    for y in range(0, Y - 1, 1):
-        for x in range(0, X - 1, 1):
+    for y in range(Y - 1):
+        for x in range(X - 1):
             v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
             v2 = src_lum(x + 1, y)
             v3 = src_lum(x + 1, y + 1)
@@ -179,6 +180,7 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
             # Finally going to build a pyramid!
+            # Triangles are described clockwise.
 
             resultfile.writelines(
                 [
@@ -186,22 +188,22 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     f'10\n{x_out(x, 0)}\n20\n{y_out(y, 0)}\n30\n{v1}\n',
                     f'11\n{x_out(x, 1)}\n21\n{y_out(y, 0)}\n31\n{v2}\n',
                     f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
-                    '62\n0\n0\n',  # triangle 1-2-0
+                    '62\n0\n0\n',
                     '3DFACE\n8\nPRYANIK\n',
                     f'10\n{x_out(x, 1)}\n20\n{y_out(y, 0)}\n30\n{v2}\n',
                     f'11\n{x_out(x, 1)}\n21\n{y_out(y, 1)}\n31\n{v3}\n',
                     f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
-                    '62\n0\n0\n',  # triangle 2-3-0
+                    '62\n0\n0\n',
                     '3DFACE\n8\nPRYANIK\n',
                     f'10\n{x_out(x, 1)}\n20\n{y_out(y, 1)}\n30\n{v3}\n',
                     f'11\n{x_out(x, 0)}\n21\n{y_out(y, 1)}\n31\n{v4}\n',
                     f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
-                    '62\n0\n0\n',  # triangle 3-4-0
+                    '62\n0\n0\n',
                     '3DFACE\n8\nPRYANIK\n',
                     f'10\n{x_out(x, 0)}\n20\n{y_out(y, 1)}\n30\n{v4}\n',
                     f'11\n{x_out(x, 0)}\n21\n{y_out(y, 0)}\n31\n{v1}\n',
                     f'12\n{x_out(x, 0.5)}\n22\n{y_out(y, 0.5)}\n32\n{v0}\n',
-                    '62\n0\n0\n',  # triangle 4-1-0
+                    '62\n0\n0\n',
                 ]
             )  # Pyramid construction complete. Ave me!
 
