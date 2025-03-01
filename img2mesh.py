@@ -4,21 +4,22 @@
 IMG2MESH - Program for conversion of image heightfield to triangle 3D-mesh in different formats
 ------------------------------------------------------------------------------------------------
 
-Created by: Ilya Razmanov (mailto:ilyarazmanov@gmail.com) aka Ilyich the Toad (mailto:amphisoft@gmail.com)
+Created by: 
+`Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka
+`Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
 
-History:
----------
+History
+--------
 
 2.13.13.2   Previous version of img2mesh GUI replaced with completely new joint (PyPNG, PyPNM) ➔ (list2pov, list2obj, list2stl, list2dxf) program with the same name.
 
 3.14.16.1   list2pov upgraded to version 3 with improved geometry.
 
--------------------
-Main site:
-https://dnyarri.github.io
+----
+Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
-Git repository:
-https://github.com/Dnyarri/img2mesh; mirror: https://gitflic.ru/project/dnyarri/img2mesh
+Git repositories:
+`Main at Github <https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -26,7 +27,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.14.19.10'
+__version__ = '3.15.01.20'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -91,7 +92,7 @@ def GetSource():
     """ ┌─────────────────────────────────────────────────────────────────────────┐
         │ Converting list to bytes of PPM-like structure "preview_data" in memory │
         └─────────────────────────────────────────────────────────────────────────┘ """
-    preview_data = pnmlpnm.list2bin(image3D, maxcolors)
+    preview_data = pnmlpnm.list2bin(image3D, maxcolors, True)
 
     """ ┌────────────────────────────────────────────────┐
         │ Now showing "preview_data" bytes using Tkinter │
