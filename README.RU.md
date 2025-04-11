@@ -60,6 +60,8 @@
 
 [Dnyarri website](https://dnyarri.github.io) - остальной товар от Жабы Огромной Умственной Силы.
 
-[github Dnyarri](https://github.com/Dnyarri/img2mesh).
+[img2mesh page](https://dnyarri.github.io/img2mesh.html) с иллюстрациями и объяснениями.
 
-[gitflic Dnyarri](https://gitflic.ru/project/dnyarri/img2mesh).
+[img2mesh source at github](https://github.com/Dnyarri/img2mesh)
+
+[img2mesh source at gitflic mirror](https://gitflic.ru/project/dnyarri/img2mesh)

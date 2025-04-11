@@ -58,8 +58,10 @@ Module list2mesh, including 3D-export functions, may be copied and used by other
 
 ### Related
 
-[Dnyarri website](https://dnyarri.github.io) - the rest of Dnyarri stuff with previews etc.
+[Dnyarri website](https://dnyarri.github.io) - other Python freeware by the same author.
 
-[github Dnyarri](https://github.com/Dnyarri/img2mesh)
+[img2mesh page](https://dnyarri.github.io/img2mesh.html) with illustrations, explanations etc.
 
-[gitflic Dnyarri](https://gitflic.ru/project/dnyarri/img2mesh)
+[img2mesh source at github](https://github.com/Dnyarri/img2mesh)
+
+[img2mesh source at gitflic mirror](https://gitflic.ru/project/dnyarri/img2mesh)
