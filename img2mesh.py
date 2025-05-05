@@ -38,7 +38,7 @@ __status__ = 'Production'
 from pathlib import Path
 from tkinter import Button, Frame, Label, Menu, PhotoImage, Tk, filedialog
 
-from list2mesh import list2dxf, list2obj, list2pov, list2stl
+from export import list2dxf, list2obj, list2pov, list2stl
 from pypng import pnglpng
 from pypnm import pnmlpnm
 
