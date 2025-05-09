@@ -15,15 +15,15 @@ list2stl present function for converting image-like nested X,Y,Z int lists to
 Usage
 ------
 
-`list2stl.list2stl(image3d, maxcolors, result_file_name)`
+    `list2stl.list2stl(image3d, maxcolors, result_file_name)`
 
 where:
 
-`image3d` - image as list of lists of lists of int channel values;
+    `image3d` - image as list of lists of lists of int channel values;
 
-`maxcolors` - maximum value of int in `image3d` list;
+    `maxcolors` - maximum value of int in `image3d` list;
 
-`result_file_name` - name of STL file to export.
+    `result_file_name` - name of STL file to export.
 
 References
 -----------
@@ -55,7 +55,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.15.01.20'
+__version__ = '3.17.9.12'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -157,6 +157,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         └────────────┘ """
     resultfile.write('solid pryanik_nepechatnyj\n')  # opening object
 
+    precision = '6e'
+    # Float output precision. Single according to https://www.fabbers.com/tech/STL_Format
+
     """ ┌──────┐
         │ Mesh │
         └──────┘ """
@@ -177,30 +180,30 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 [
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {v2:.{precision}}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {v1:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {v3:.{precision}}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {v2:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {v4:.{precision}}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {v3:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {v0:e}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {v1:.{precision}}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {v4:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                 ]
@@ -213,16 +216,16 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     [
                         '   facet normal -1 0 0\n',
                         '       outer loop\n',  # 1 - down 1b - 4b
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {v1:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                         '   facet normal -1 0 0\n',
                         '       outer loop\n',  # 4b - up 4 - 1
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {v4:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {v1:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -235,16 +238,16 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     [
                         '   facet normal 1 0 0\n',
                         '       outer loop\n',  # 3 - down 3b - 2b
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {v3:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                         '   facet normal 1 0 0\n',
                         '       outer loop\n',  # 2b - up 2 - 3
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {v2:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {v3:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -257,16 +260,16 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     [
                         '   facet normal 0 -1 0\n',
                         '       outer loop\n',  # 2 - down 2b - 1b
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {v2:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                         '   facet normal 0 -1 0\n',
                         '       outer loop\n',  # 1b - 1 - 2
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {v1:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {v2:e}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {v1:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {v2:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -279,16 +282,16 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     [
                         '   facet normal 0 1 0\n',
                         '       outer loop\n',  # 4 - down 4b - 3b
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {v4:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                         '   facet normal 0 1 0\n',
                         '       outer loop\n',  # 3b - up 3 - 4
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
-                        f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {v3:e}\n',
-                        f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {v4:e}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                        f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {v3:.{precision}}\n',
+                        f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {v4:.{precision}}\n',
                         '       endloop\n',
                         '   endfacet\n',
                     ]
@@ -300,30 +303,30 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 [
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 0):e} {0:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
-                    f'           vertex {x_out(x, 1):e} {y_out(y, 1):e} {0:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                     '   facet normal 0 0 1\n',
                     '       outer loop\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 0):e} {0:e}\n',
-                    f'           vertex {x_out(x, 0):e} {y_out(y, 1):e} {0:e}\n',
-                    f'           vertex {x_out(x, 0.5):e} {y_out(y, 0.5):e} {0:e}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {0:.{precision}}\n',
+                    f'           vertex {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {0:.{precision}}\n',
                     '       endloop\n',
                     '   endfacet\n',
                 ]

@@ -4,7 +4,7 @@
 IMG2OBJ - Conversion of image heightfield to triangle mesh in Wavefront OBJ format
 -----------------------------------------------------------------------------------
 
-Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
+Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
 
 Overview
 ---------
@@ -15,15 +15,15 @@ list2obj present function for converting image-like nested X,Y,Z int lists to
 Usage
 ------
 
-`list2obj.list2obj(image3d, maxcolors, result_file_name)`
+    `list2obj.list2obj(image3d, maxcolors, result_file_name)`
 
 where:
 
-`image3d` - image as list of lists of lists of int channel values;
+    `image3d` - image as list of lists of lists of int channel values;
 
-`maxcolors` - maximum value of int in `image3d` list;
+    `maxcolors` - maximum value of int in `image3d` list;
 
-`result_file_name` - name of OBJ file to export.
+    `result_file_name` - name of OBJ file to export.
 
 Reference
 ----------
@@ -46,7 +46,7 @@ Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
 Git repositories:
-`Main at Github <https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
+`Main at Github<https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror<https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -54,7 +54,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.15.01.20'
+__version__ = '3.17.9.12'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -159,6 +159,10 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     resultfile.write('o pryanik_nepechatnyj\n')  # opening object
 
+    precision = '6f'
+    # Float output precision. Max for Python double is supposed to be 16, however
+    # for 16-bit images 6 should be enough.
+
     """ ┌──────┐
         │ Mesh │
         └──────┘ """
@@ -176,21 +180,21 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
             resultfile.writelines(
                 [
-                    f'v {x_out(x, 0)} {y_out(y, 0)} {v1}\n',
-                    f'v {x_out(x, 1)} {y_out(y, 0)} {v2}\n',
-                    f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
+                    f'v {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {v1:.{precision}}\n',
+                    f'v {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {v2:.{precision}}\n',
+                    f'v {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     'f -2 -3 -1\n',  # triangle 1-2-0, order changed to counterclockwise that means normal up
-                    f'v {x_out(x, 1)} {y_out(y, 0)} {v2}\n',
-                    f'v {x_out(x, 1)} {y_out(y, 1)} {v3}\n',
-                    f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
+                    f'v {x_out(x, 1):.{precision}} {y_out(y, 0):.{precision}} {v2:.{precision}}\n',
+                    f'v {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {v3:.{precision}}\n',
+                    f'v {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     'f -2 -3 -1\n',  # triangle 2-3-0, order changed to counterclockwise
-                    f'v {x_out(x, 1)} {y_out(y, 1)} {v3}\n',
-                    f'v {x_out(x, 0)} {y_out(y, 1)} {v4}\n',
-                    f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
+                    f'v {x_out(x, 1):.{precision}} {y_out(y, 1):.{precision}} {v3:.{precision}}\n',
+                    f'v {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {v4:.{precision}}\n',
+                    f'v {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     'f -2 -3 -1\n',  # triangle 3-4-0, order changed to counterclockwise
-                    f'v {x_out(x, 0)} {y_out(y, 1)} {v4}\n',
-                    f'v {x_out(x, 0)} {y_out(y, 0)} {v1}\n',
-                    f'v {x_out(x, 0.5)} {y_out(y, 0.5)} {v0}\n',
+                    f'v {x_out(x, 0):.{precision}} {y_out(y, 1):.{precision}} {v4:.{precision}}\n',
+                    f'v {x_out(x, 0):.{precision}} {y_out(y, 0):.{precision}} {v1:.{precision}}\n',
+                    f'v {x_out(x, 0.5):.{precision}} {y_out(y, 0.5):.{precision}} {v0:.{precision}}\n',
                     'f -2 -3 -1\n',  # triangle 4-1-0, order changed to counterclockwise
                 ]
             )  # Pyramid construction complete. Ave me!
