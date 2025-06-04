@@ -52,15 +52,17 @@
 
 2. [Wavefront Object Files (.obj)](https://paulbourke.net/dataformats/obj/obj_spec.pdf) в [Paul Bourke collection](https://paulbourke.net/dataformats/).
 
-3. [Stereo Lithography Files (.stl)](https://paulbourke.net/dataformats/stl/) [*ibid*](https://paulbourke.net/dataformats/).
+3. [Cătălin IANCU et al., From CAD model to 3D print via “STL” file format](https://www.utgjiu.ro/rev_mec/mecanica/pdf/2010-01/13_Catalin%20Iancu.pdf).
 
-4. [DXF Reference](https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf) от Autodesk, Inc.
+4. [Marshall Burns, Automated Fabrication, Section 6.5](https://www.fabbers.com/tech/STL_Format).
+
+5. [DXF Reference](https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf) by Autodesk, Inc.
 
 ### Родственное
 
 [Dnyarri website](https://dnyarri.github.io) - остальной товар от Жабы Огромной Умственной Силы.
 
-[img2mesh page](https://dnyarri.github.io/img2mesh.html) с иллюстрациями и объяснениями.
+[img2mesh с иллюстрациями и объяснениями](https://dnyarri.github.io/img2mesh.html).
 
 [img2mesh source at github](https://github.com/Dnyarri/img2mesh)
 

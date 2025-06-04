@@ -52,15 +52,17 @@ Module list2mesh, including 3D-export functions, may be copied and used by other
 
 2. [Wavefront Object Files (.obj)](https://paulbourke.net/dataformats/obj/obj_spec.pdf) specs from [Paul Bourke collection](https://paulbourke.net/dataformats/).
 
-3. [Stereo Lithography Files (.stl)](https://paulbourke.net/dataformats/stl/) brief description [*ibid*](https://paulbourke.net/dataformats/).
+3. [Cătălin IANCU et al., From CAD model to 3D print via “STL” file format](https://www.utgjiu.ro/rev_mec/mecanica/pdf/2010-01/13_Catalin%20Iancu.pdf).
 
-4. [DXF Reference](https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf) by Autodesk, Inc.
+4. [Marshall Burns, Automated Fabrication, Section 6.5](https://www.fabbers.com/tech/STL_Format).
+
+5. [DXF Reference](https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf) by Autodesk, Inc.
 
 ### Related
 
-[Dnyarri website](https://dnyarri.github.io) - other Python freeware by the same author.
+[Dnyarri website - more Python freeware](https://dnyarri.github.io) by the same author.
 
-[img2mesh page](https://dnyarri.github.io/img2mesh.html) with illustrations, explanations etc.
+[img2mesh page with illustrations](https://dnyarri.github.io/img2mesh.html), explanations etc.
 
 [img2mesh source at github](https://github.com/Dnyarri/img2mesh)
 
