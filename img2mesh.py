@@ -30,13 +30,15 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.17.9.12'
+__version__ = '3.18.12.8'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
 
 from pathlib import Path
-from tkinter import Button, Frame, Label, Menu, PhotoImage, Tk, filedialog
+from tkinter import Button, Frame, Label, Menu, PhotoImage, Tk
+from tkinter.filedialog import askopenfilename, asksaveasfilename
+from tkinter.messagebox import showinfo
 
 from export import list2dxf, list2obj, list2pov, list2stl
 from pypng import pnglpng
@@ -51,6 +53,15 @@ def DisMiss(event=None):
 def ShowMenu(event):
     """Pop menu up (or sort of drop it down)"""
     menu01.post(event.x_root, event.y_root)
+
+
+def ShowInfo(event=None):
+    """Show program and module version"""
+    showinfo(
+        title='Image information',
+        message=f'File: {sourcefilename}',
+        detail=f'Image: X={X}, Y={Y}, Z={Z}, maxcolors={maxcolors}',
+    )
 
 
 def UINormal():
@@ -79,7 +90,7 @@ def GetSource(event=None):
 
     zoom_factor = 0
 
-    sourcefilename = filedialog.askopenfilename(title='Open image file', filetypes=[('Supported formats', '.png .ppm .pgm .pbm'), ('PNG', '.png'), ('PNM', '.ppm .pgm .pbm')])
+    sourcefilename = askopenfilename(title='Open image file', filetypes=[('Supported formats', '.png .ppm .pgm .pbm'), ('Portable network graphics', '.png'), ('Portable network map', '.ppm .pgm .pbm')])
     if sourcefilename == '':
         return
 
@@ -145,6 +156,7 @@ def GetSource(event=None):
     zanyato.bind('<Alt-Button-1>', zoomOut)  # Alt + left click
     zanyato.bind('<Double-Alt-Button-1>', zoomOut)  # Alt + left click too fast
     sortir.bind_all('<MouseWheel>', zoomWheel)  # Wheel
+    sortir.bind_all('<Control-i>', ShowInfo)
     # enabling zoom buttons
     butt_plus.config(state='normal', cursor='hand2')
     butt_minus.config(state='normal', cursor='hand2')
@@ -155,6 +167,7 @@ def GetSource(event=None):
     menu01.entryconfig('Export OBJ...', state='normal')
     menu01.entryconfig('Export DXF...', state='normal')
     menu01.entryconfig('Export STL...', state='normal')
+    menu01.entryconfig('Image Info...', state='normal')
 
     UINormal()
 
@@ -162,7 +175,7 @@ def GetSource(event=None):
 def SaveAsPOV():
     """Once pressed on Export POV"""
     # Open "Save as..." file
-    savefilename = filedialog.asksaveasfilename(
+    savefilename = asksaveasfilename(
         title='Save POV-Ray file',
         filetypes=[
             ('POV-Ray file', '.pov .inc'),
@@ -187,7 +200,7 @@ def SaveAsPOV():
 def SaveAsOBJ():
     """Once pressed on Export OBJ"""
     # Open "Save as..." file
-    savefilename = filedialog.asksaveasfilename(
+    savefilename = asksaveasfilename(
         title='Save Wavefront OBJ file',
         filetypes=[
             ('Wavefront OBJ', '.obj'),
@@ -212,7 +225,7 @@ def SaveAsOBJ():
 def SaveAsSTL():
     """Once pressed on Export STL"""
     # Open "Save as..." file
-    savefilename = filedialog.asksaveasfilename(
+    savefilename = asksaveasfilename(
         title='Save STL file',
         filetypes=[
             ('Stereolithography STL', '.stl'),
@@ -238,7 +251,7 @@ def SaveAsSTL():
 def SaveAsDXF():
     """Once pressed on Export DXF"""
     # Open "Save as..." file
-    savefilename = filedialog.asksaveasfilename(
+    savefilename = asksaveasfilename(
         title='Save Autodesk DXF file',
         filetypes=[
             ('Autodesk DXF', '.dxf'),
@@ -333,6 +346,8 @@ menu01.add_command(label='Export POV-Ray...', state='disabled', command=SaveAsPO
 menu01.add_command(label='Export OBJ...', state='disabled', command=SaveAsOBJ)
 menu01.add_command(label='Export DXF...', state='disabled', command=SaveAsDXF)
 menu01.add_command(label='Export STL...', state='disabled', command=SaveAsSTL)
+menu01.add_separator()
+menu01.add_command(label='Image Info...', accelerator='Ctrl+I', state='disabled', command=ShowInfo)
 menu01.add_separator()
 menu01.add_command(label='Exit', state='normal', accelerator='Ctrl+Q', command=DisMiss)
 
