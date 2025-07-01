@@ -58,7 +58,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.18.22.2'
+__version__ = '3.19.1.7'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -96,7 +96,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         """
 
         cx = int(x)
-        cy = int(Y - 1 - y)  # Mirroring from Photoshop to right-hand 3D
+        cy = int(Y - 1 - y)  # Mirroring from Photoshop to STL
         cx = max(0, cx)
         cx = min((X - 1), cx)
         cy = max(0, cy)
@@ -111,11 +111,11 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         if Z == 1:  # L
             yntensity = src(x, y, 0)
-        elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
+        elif Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
             yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L on A.
+        elif Z == 4:  # RGBA, multiply calculated L by A.
             yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
         return yntensity / float(maxcolors)
@@ -169,7 +169,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
     PRECISION = '6e'
-    # Float output precision. Set single according to  Ref. 2
+    # Float output precision. Set single according to  Ref. [2]
 
     resultfile = open(resultfilename, 'w')
 

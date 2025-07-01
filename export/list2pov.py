@@ -4,7 +4,7 @@
 IMG2POV - Conversion of image heightfield to triangle mesh in POV-Ray format
 -----------------------------------------------------------------------------
 
-Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
+Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
 
 Overview
 ---------
@@ -56,7 +56,8 @@ Simplified mesh writing syntaxis with functions; intensity multiplication on opa
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
 Git repositories:
-`Main at Github<https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror<https://gitflic.ru/project/dnyarri/img2mesh>`_
+`Main at Github <https://github.com/Dnyarri/img2mesh>`_;
+`Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -64,7 +65,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.17.9.12'
+__version__ = '3.19.1.7'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -111,15 +112,15 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         return channelvalue
 
     def src_lum(x: int | float, y: int | float) -> float:
-        """Returns brightness of pixel x, y, multiplied on opacity if exists, normalized to 0..1 range."""
+        """Returns brightness of pixel x, y, multiplied by opacity if exists, normalized to 0..1 range."""
 
         if Z == 1:  # L
             yntensity = src(x, y, 0)
-        elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
+        elif Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
             yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L on A.
+        elif Z == 4:  # RGBA, multiply calculated L by A.
             yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
         return yntensity / float(maxcolors)
@@ -217,7 +218,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             'It is highly recommended to transform final boxedthing here and not in the end\n',
             'to keep inside vector glued to thething! */\n\n',
             '#ifndef (thething_transform)  // Include check\n',
-            '  #declare thething_transform = transform{rotate <0, 0, 0>};  // Put your transforms here\n',
+            '  #declare thething_transform = transform{\n  // You can place your global scale, rotate etc. here\n};',
             '#end\n\n',
         ]
     )
@@ -311,13 +312,13 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         """Recalculate source y to result y"""
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
+    PRECISION = '7f'
+    # Float output precision. Max for Python double is supposed to be 16, however
+    # for 16-bit images 7 is enough.
+
     resultfile.write('\n#declare thething = mesh {\n')  # Opening mesh object "thething"
 
     # Now going to cycle through image and build mesh
-
-    precision = '6f'
-    # Float output precision. Max for Python double is supposed to be 16, however
-    # for 16-bit images 6 should be enough.
 
     for y in range(Y - 1):  # Mesh includes extra pixels at the right and below, therefore -1
         resultfile.write(f'\n\n   // Row {y}\n')
@@ -340,19 +341,19 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # Triangles are described clockwise.
 
             resultfile.write(
-                f'\n    triangle {{<{x_out(x, 0):.{precision}}, {y_out(y, 0):.{precision}}, map({v1:.{precision}})> <{x_out(x, 1):.{precision}}, {y_out(y, 0):.{precision}}, map({v2:.{precision}})> <{x_out(x, 0.5):.{precision}}, {y_out(y, 0.5):.{precision}}, map({v0:.{precision}})>}}'
+                f'\n    triangle {{<{x_out(x, 0):.{PRECISION}}, {y_out(y, 0):.{PRECISION}}, map({v1:.{PRECISION}})> <{x_out(x, 1):.{PRECISION}}, {y_out(y, 0):.{PRECISION}}, map({v2:.{PRECISION}})> <{x_out(x, 0.5):.{PRECISION}}, {y_out(y, 0.5):.{PRECISION}}, map({v0:.{PRECISION}})>}}'
             )  # Triangle 1-2-0
 
             resultfile.write(
-                f'\n    triangle {{<{x_out(x, 1):.{precision}}, {y_out(y, 0):.{precision}}, map({v2:.{precision}})> <{x_out(x, 1):.{precision}}, {y_out(y, 1):.{precision}}, map({v3:.{precision}})> <{x_out(x, 0.5):.{precision}}, {y_out(y, 0.5):.{precision}}, map({v0:.{precision}})>}}'
+                f'\n    triangle {{<{x_out(x, 1):.{PRECISION}}, {y_out(y, 0):.{PRECISION}}, map({v2:.{PRECISION}})> <{x_out(x, 1):.{PRECISION}}, {y_out(y, 1):.{PRECISION}}, map({v3:.{PRECISION}})> <{x_out(x, 0.5):.{PRECISION}}, {y_out(y, 0.5):.{PRECISION}}, map({v0:.{PRECISION}})>}}'
             )  # Triangle 2-3-0
 
             resultfile.write(
-                f'\n    triangle {{<{x_out(x, 1):.{precision}}, {y_out(y, 1):.{precision}}, map({v3:.{precision}})> <{x_out(x, 0):.{precision}}, {y_out(y, 1):.{precision}}, map({v4:.{precision}})> <{x_out(x, 0.5):.{precision}}, {y_out(y, 0.5):.{precision}}, map({v0:.{precision}})>}}'
+                f'\n    triangle {{<{x_out(x, 1):.{PRECISION}}, {y_out(y, 1):.{PRECISION}}, map({v3:.{PRECISION}})> <{x_out(x, 0):.{PRECISION}}, {y_out(y, 1):.{PRECISION}}, map({v4:.{PRECISION}})> <{x_out(x, 0.5):.{PRECISION}}, {y_out(y, 0.5):.{PRECISION}}, map({v0:.{PRECISION}})>}}'
             )  # Triangle 3-4-0
 
             resultfile.write(
-                f'\n    triangle {{<{x_out(x, 0):.{precision}}, {y_out(y, 1):.{precision}}, map({v4:.{precision}})> <{x_out(x, 0):.{precision}}, {y_out(y, 0):.{precision}}, map({v1:.{precision}})> <{x_out(x, 0.5):.{precision}}, {y_out(y, 0.5):.{precision}}, map({v0:.{precision}})>}}'
+                f'\n    triangle {{<{x_out(x, 0):.{PRECISION}}, {y_out(y, 1):.{PRECISION}}, map({v4:.{PRECISION}})> <{x_out(x, 0):.{PRECISION}}, {y_out(y, 0):.{PRECISION}}, map({v1:.{PRECISION}})> <{x_out(x, 0.5):.{PRECISION}}, {y_out(y, 0.5):.{PRECISION}}, map({v0:.{PRECISION}})>}}'
             )  # Triangle 4-1-0
 
             # Pyramid construction complete. Ave me!
@@ -360,7 +361,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     resultfile.writelines(
         [
             '\n\n  inside_vector vtransform(<0, 0, 1>, thething_transform)\n\n',
-            f'//  clipped_by {{plane {{-z, {-1.0 / maxcolors:.{precision}}}}}}  // Variant of cropping baseline on minimal color step\n\n',
+            f'//  clipped_by {{plane {{-z, {-1.0 / maxcolors:.{PRECISION}}}}}}  // Variant of cropping baseline on minimal color step\n\n',
             'transform thething_transform\n\n',
             '}\n//    Closed thething\n\n',
         ]
@@ -373,9 +374,10 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     resultfile.writelines(
         [
             '\n#ifndef (Main)  // Include check 3\n\n',
+            '#declare xy_clip = 1E-7;  // Side clipping for bounding box to remove roundoff artifacts\n',
             '#declare boxedthing = object {\n',
             '  intersection {\n',
-            '    box {<-0.5+1E-7, -0.5+1E-7, 0>, <0.5-1E-7, 0.5-1E-7, 1.1>\n',
+            '    box {<-0.5 + xy_clip, -0.5 + xy_clip, 0>, <0.5 - xy_clip, 0.5 - xy_clip, 1.1>\n',
             '    // Beware of round-off errors when transforming: bounding box may hit thething!\n',
             '          pigment {rgb <0.5, 0.5, 5>}\n',
             '         transform thething_transform\n    }\n',

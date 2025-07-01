@@ -4,7 +4,7 @@
 IMG2DXF - Conversion of image heightfield to triangle mesh in Autodesk DXF format
 -----------------------------------------------------------------------------------
 
-Created by: `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
+Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
 
 Overview
 ---------
@@ -46,7 +46,8 @@ Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
 Git repositories:
-`Main at Github<https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror<https://gitflic.ru/project/dnyarri/img2mesh>`_
+`Main at Github <https://github.com/Dnyarri/img2mesh>`_;
+`Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -54,7 +55,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.17.9.12'
+__version__ = '3.19.1.7'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -90,7 +91,7 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         """
 
         cx = int(x)
-        cy = int(Y - 1 - y)  # Mirroring from Photoshop to Wavefront
+        cy = int(Y - 1 - y)  # Mirroring from Photoshop to DXF
         cx = max(0, cx)
         cx = min((X - 1), cx)
         cy = max(0, cy)
@@ -101,15 +102,15 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         return channelvalue
 
     def src_lum(x: int | float, y: int | float) -> float:
-        """Returns brightness of pixel x, y, multiplied on opacity if exists, normalized to 0..1 range."""
+        """Returns brightness of pixel x, y, multiplied by opacity if exists, normalized to 0..1 range."""
 
         if Z == 1:  # L
             yntensity = src(x, y, 0)
-        elif Z == 2:  # LA, multiply L on A. A = 0 is transparent, a = maxcolors is opaque
+        elif Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
             yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L on A.
+        elif Z == 4:  # RGBA, multiply calculated L by A.
             yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
 
         return yntensity / float(maxcolors)
@@ -150,6 +151,10 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         """Recalculate source y to result y"""
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
+    PRECISION = '7f'
+    # Float output precision. Max for Python double is supposed to be 16, however
+    # for 16-bit images 7 is enough.
+
     resultfile = open(resultfilename, 'w')
 
     """ ┌────────────┐
@@ -169,10 +174,6 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     # Now going to cycle through image and build mesh
 
-    precision = '6f'
-    # Float output precision. Max for Python double is supposed to be 16, however
-    # for 16-bit images 6 should be enough.
-
     for y in range(Y - 1):
         for x in range(X - 1):
             v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
@@ -187,24 +188,24 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             resultfile.writelines(
                 [
                     '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 0):.{precision}}\n20\n{y_out(y, 0):.{precision}}\n30\n{v1:.{precision}}\n',
-                    f'11\n{x_out(x, 1):.{precision}}\n21\n{y_out(y, 0):.{precision}}\n31\n{v2:.{precision}}\n',
-                    f'12\n{x_out(x, 0.5):.{precision}}\n22\n{y_out(y, 0.5):.{precision}}\n32\n{v0:.{precision}}\n',
+                    f'10\n{x_out(x, 0):.{PRECISION}}\n20\n{y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
+                    f'11\n{x_out(x, 1):.{PRECISION}}\n21\n{y_out(y, 0):.{PRECISION}}\n31\n{v2:.{PRECISION}}\n',
+                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
                     '62\n0\n0\n',
                     '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 1):.{precision}}\n20\n{y_out(y, 0):.{precision}}\n30\n{v2:.{precision}}\n',
-                    f'11\n{x_out(x, 1):.{precision}}\n21\n{y_out(y, 1):.{precision}}\n31\n{v3:.{precision}}\n',
-                    f'12\n{x_out(x, 0.5):.{precision}}\n22\n{y_out(y, 0.5):.{precision}}\n32\n{v0:.{precision}}\n',
+                    f'10\n{x_out(x, 1):.{PRECISION}}\n20\n{y_out(y, 0):.{PRECISION}}\n30\n{v2:.{PRECISION}}\n',
+                    f'11\n{x_out(x, 1):.{PRECISION}}\n21\n{y_out(y, 1):.{PRECISION}}\n31\n{v3:.{PRECISION}}\n',
+                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
                     '62\n0\n0\n',
                     '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 1):.{precision}}\n20\n{y_out(y, 1):.{precision}}\n30\n{v3:.{precision}}\n',
-                    f'11\n{x_out(x, 0):.{precision}}\n21\n{y_out(y, 1):.{precision}}\n31\n{v4:.{precision}}\n',
-                    f'12\n{x_out(x, 0.5):.{precision}}\n22\n{y_out(y, 0.5):.{precision}}\n32\n{v0:.{precision}}\n',
+                    f'10\n{x_out(x, 1):.{PRECISION}}\n20\n{y_out(y, 1):.{PRECISION}}\n30\n{v3:.{PRECISION}}\n',
+                    f'11\n{x_out(x, 0):.{PRECISION}}\n21\n{y_out(y, 1):.{PRECISION}}\n31\n{v4:.{PRECISION}}\n',
+                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
                     '62\n0\n0\n',
                     '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 0):.{precision}}\n20\n{y_out(y, 1):.{precision}}\n30\n{v4:.{precision}}\n',
-                    f'11\n{x_out(x, 0):.{precision}}\n21\n{y_out(y, 0):.{precision}}\n31\n{v1:.{precision}}\n',
-                    f'12\n{x_out(x, 0.5):.{precision}}\n22\n{y_out(y, 0.5):.{precision}}\n32\n{v0:.{precision}}\n',
+                    f'10\n{x_out(x, 0):.{PRECISION}}\n20\n{y_out(y, 1):.{PRECISION}}\n30\n{v4:.{PRECISION}}\n',
+                    f'11\n{x_out(x, 0):.{PRECISION}}\n21\n{y_out(y, 0):.{PRECISION}}\n31\n{v1:.{PRECISION}}\n',
+                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
                     '62\n0\n0\n',
                 ]
             )  # Pyramid construction complete. Ave me!
