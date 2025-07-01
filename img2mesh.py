@@ -30,7 +30,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.18.22.2'
+__version__ = '3.19.1.7'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -41,22 +41,22 @@ from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showinfo
 
 from export import list2dxf, list2obj, list2pov, list2stl
-from pypng import pnglpng
-from pypnm import pnmlpnm
+from pypng.pnglpng import png2list
+from pypnm.pnmlpnm import list2bin, pnm2list
 
 
-def DisMiss(event=None):
+def DisMiss(event=None) -> None:
     """Kill dialog and continue"""
     sortir.destroy()
 
 
-def ShowMenu(event):
+def ShowMenu(event) -> None:
     """Pop menu up (or sort of drop it down)"""
     menu01.post(event.x_root, event.y_root)
 
 
-def ShowInfo(event=None):
-    """Show program and module version"""
+def ShowInfo(event=None) -> None:
+    """Show image information"""
     showinfo(
         title='Image information',
         message=f'File: {sourcefilename}',
@@ -64,7 +64,7 @@ def ShowInfo(event=None):
     )
 
 
-def UINormal():
+def UINormal() -> None:
     """Normal UI state, buttons enabled"""
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
@@ -72,7 +72,7 @@ def UINormal():
     info_string.config(text=info_normal['txt'], foreground=info_normal['fg'], background=info_normal['bg'])
 
 
-def UIBusy():
+def UIBusy() -> None:
     """Busy UI state, buttons disabled"""
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
@@ -81,9 +81,8 @@ def UIBusy():
     sortir.update()
 
 
-def GetSource(event=None):
+def GetSource(event=None) -> None:
     """Opening source image and redefining other controls state"""
-
     global zoom_factor, zoom_do, zoom_show, preview, preview_data
     global X, Y, Z, maxcolors, image3D, sourcefilename
     global info_normal
@@ -106,11 +105,11 @@ def GetSource(event=None):
 
     if Path(sourcefilename).suffix == '.png':
         # Reading image as list
-        X, Y, Z, maxcolors, image3D, info = pnglpng.png2list(sourcefilename)
+        X, Y, Z, maxcolors, image3D, info = png2list(sourcefilename)
 
     elif Path(sourcefilename).suffix in ('.ppm', '.pgm', '.pbm'):
         # Reading image as list
-        X, Y, Z, maxcolors, image3D = pnmlpnm.pnm2list(sourcefilename)
+        X, Y, Z, maxcolors, image3D = pnm2list(sourcefilename)
 
     else:
         raise ValueError('Extension not recognized')
@@ -118,7 +117,7 @@ def GetSource(event=None):
     """ ┌─────────────────────────────────────────────────────────────────────────┐
         │ Converting list to bytes of PPM-like structure "preview_data" in memory │
         └────────────────────────────────────────────────────────────────────────-┘ """
-    preview_data = pnmlpnm.list2bin(image3D, maxcolors, show_chessboard=True)
+    preview_data = list2bin(image3D, maxcolors, show_chessboard=True)
 
     """ ┌────────────────────────────────────────────────┐
         │ Now showing "preview_data" bytes using Tkinter │
@@ -172,9 +171,8 @@ def GetSource(event=None):
     UINormal()
 
 
-def SaveAsPOV():
+def SaveAsPOV() -> None:
     """Once pressed on Export POV"""
-    # Open "Save as..." file
     savefilename = asksaveasfilename(
         title='Save POV-Ray file',
         filetypes=[
@@ -197,9 +195,8 @@ def SaveAsPOV():
     UINormal()
 
 
-def SaveAsOBJ():
+def SaveAsOBJ() -> None:
     """Once pressed on Export OBJ"""
-    # Open "Save as..." file
     savefilename = asksaveasfilename(
         title='Save Wavefront OBJ file',
         filetypes=[
@@ -222,9 +219,8 @@ def SaveAsOBJ():
     UINormal()
 
 
-def SaveAsSTL():
+def SaveAsSTL() -> None:
     """Once pressed on Export STL"""
-    # Open "Save as..." file
     savefilename = asksaveasfilename(
         title='Save STL file',
         filetypes=[
@@ -248,9 +244,8 @@ def SaveAsSTL():
     UINormal()
 
 
-def SaveAsDXF():
+def SaveAsDXF() -> None:
     """Once pressed on Export DXF"""
-    # Open "Save as..." file
     savefilename = asksaveasfilename(
         title='Save Autodesk DXF file',
         filetypes=[
@@ -273,7 +268,8 @@ def SaveAsDXF():
     UINormal()
 
 
-def zoomIn(event=None):
+def zoomIn(event=None) -> None:
+    """Zooming preview in"""
     global zoom_factor, preview
     zoom_factor = min(zoom_factor + 1, 4)  # max zoom 5
     preview = PhotoImage(data=preview_data)
@@ -289,7 +285,8 @@ def zoomIn(event=None):
         butt_plus.config(state='normal', cursor='hand2')
 
 
-def zoomOut(event=None):
+def zoomOut(event=None) -> None:
+    """Zooming preview out"""
     global zoom_factor, preview
     zoom_factor = max(zoom_factor - 1, -4)  # min zoom 1/5
     preview = PhotoImage(data=preview_data)
@@ -305,7 +302,8 @@ def zoomOut(event=None):
         butt_minus.config(state='normal', cursor='hand2')
 
 
-def zoomWheel(event):
+def zoomWheel(event) -> None:
+    """Starting zoomIn or zoomOut by mouse wheel"""
     if event.delta < 0:
         zoomOut()
     if event.delta > 0:
@@ -316,7 +314,6 @@ def zoomWheel(event):
     ║ Main body ║
     ╚═══════════╝ """
 
-# Starting values
 zoom_factor = 0
 sourcefilename = X = Y = Z = maxcolors = None
 
