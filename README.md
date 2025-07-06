@@ -6,7 +6,7 @@
 
 Python program for conversion of bitmap heightfield (in [PNG](http://www.libpng.org/pub/png/) or [PGM/PPM](https://dnyarri.github.io/pypnm.html) format) to 3D triangle mesh in [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
 
-[![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
+[![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html)
 
 ## Format compatibility
 
@@ -30,7 +30,7 @@ Python program for conversion of bitmap heightfield (in [PNG](http://www.libpng.
 
 - **pypng** and **pypnm** modules contain components providing PNG and PPM image files reading as nested 3D lists.
 
-[![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)](https://dnyarri.github.io/img2mesh.html)
+[![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png "Preview of img2mesh output files in one folder")](https://dnyarri.github.io/img2mesh.html)
 
 ## Dependencies
 

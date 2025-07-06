@@ -6,7 +6,7 @@
 
 Программа на Python для трассировки карты высот в графических форматах [PNG](http://www.libpng.org/pub/png/) или [PGM/PPM](https://dnyarri.github.io/pypnm.html) в трёхмерную векторную сетку треугольников (triangle mesh) в форматах [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF, а также STL для 3D-принтеров. Координаты x, y пикселя соответствуют координатам x, y узлов сетки, яркость пикселя соответствует высоте (z) узла сетки. В случае исходных графических файлов с низким разрешением полученная при трассировке 3D-сетка обеспечивает лучшее визуальное качество рендеринга, нежели исходные графические файлы при их использовании в качестве heightfield напрямую.  
 
-[![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png)](https://dnyarri.github.io/img2mesh.html)
+[![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html)
 
 ## Совместимость с форматами
 
@@ -30,7 +30,7 @@
 
 - Модули **pypng** и **pypnm**, обеспечивающие чтение PNG и PGM/PPM файлов, соответственно.
 
-[![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png)](https://dnyarri.github.io/img2mesh.html)
+[![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png "Preview of img2mesh output files in one folder")](https://dnyarri.github.io/img2mesh.html)
 
 ## Внешние зависимости
 
