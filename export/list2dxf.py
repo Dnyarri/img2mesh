@@ -40,7 +40,9 @@ Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 
 1.13.4.0    Rewritten from standalone img2dxf to module list2dxf.
 
-3.14.16.1   Mesh geometry completely changed.
+3.14.16.1   Mesh geometry completely changed to ver. 3.
+
+3.19.8.1    Clipping zero or transparent pixels.
 
 -------------------
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
@@ -55,7 +57,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.19.1.7'
+__version__ = '3.19.8.1'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -64,15 +66,12 @@ __status__ = 'Production'
 def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str) -> None:
     """Converting nested 3D list to Autodesk DXF heightfield triangle mesh.
 
-    `image3d` - image as list of lists of lists of int channel values.
-
-    `maxcolors` - maximum value of int in `image3d` list.
-
-    `resultfilename` - name of DXF file to export.
+    - `image3d` - image as list of lists of lists of int channel values;
+    - `maxcolors` - maximum value of int in `image3d` list;
+    - `resultfilename` - name of DXF file to export.
 
     """
 
-    # Determining list sizes
     Y = len(image3d)
     X = len(image3d[0])
     Z = len(image3d[0][0])
@@ -116,7 +115,7 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         return yntensity / float(maxcolors)
 
     def src_lum_blin(x: float, y: float) -> float:
-        """Based on src_lum above, but returns bilinearly interpolated brightness of pixel x, y"""
+        """Based on src_lum above, but returns bilinearly interpolated brightness of pixel x, y."""
 
         fx = float(x)  # Force float input coordinates for interpolation
         fy = float(y)
@@ -185,30 +184,31 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # Finally going to build a pyramid!
             # Triangles are described clockwise.
 
-            resultfile.writelines(
-                [
-                    '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 0):.{PRECISION}}\n20\n{y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
-                    f'11\n{x_out(x, 1):.{PRECISION}}\n21\n{y_out(y, 0):.{PRECISION}}\n31\n{v2:.{PRECISION}}\n',
-                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                    '62\n0\n0\n',
-                    '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 1):.{PRECISION}}\n20\n{y_out(y, 0):.{PRECISION}}\n30\n{v2:.{PRECISION}}\n',
-                    f'11\n{x_out(x, 1):.{PRECISION}}\n21\n{y_out(y, 1):.{PRECISION}}\n31\n{v3:.{PRECISION}}\n',
-                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                    '62\n0\n0\n',
-                    '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 1):.{PRECISION}}\n20\n{y_out(y, 1):.{PRECISION}}\n30\n{v3:.{PRECISION}}\n',
-                    f'11\n{x_out(x, 0):.{PRECISION}}\n21\n{y_out(y, 1):.{PRECISION}}\n31\n{v4:.{PRECISION}}\n',
-                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                    '62\n0\n0\n',
-                    '3DFACE\n8\nPRYANIK\n',
-                    f'10\n{x_out(x, 0):.{PRECISION}}\n20\n{y_out(y, 1):.{PRECISION}}\n30\n{v4:.{PRECISION}}\n',
-                    f'11\n{x_out(x, 0):.{PRECISION}}\n21\n{y_out(y, 0):.{PRECISION}}\n31\n{v1:.{PRECISION}}\n',
-                    f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                    '62\n0\n0\n',
-                ]
-            )  # Pyramid construction complete. Ave me!
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+                resultfile.writelines(
+                    [
+                        '3DFACE\n8\nPRYANIK\n',
+                        f'10\n{x_out(x, 0):.{PRECISION}}\n20\n{y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
+                        f'11\n{x_out(x, 1):.{PRECISION}}\n21\n{y_out(y, 0):.{PRECISION}}\n31\n{v2:.{PRECISION}}\n',
+                        f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                        '62\n0\n0\n',
+                        '3DFACE\n8\nPRYANIK\n',
+                        f'10\n{x_out(x, 1):.{PRECISION}}\n20\n{y_out(y, 0):.{PRECISION}}\n30\n{v2:.{PRECISION}}\n',
+                        f'11\n{x_out(x, 1):.{PRECISION}}\n21\n{y_out(y, 1):.{PRECISION}}\n31\n{v3:.{PRECISION}}\n',
+                        f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                        '62\n0\n0\n',
+                        '3DFACE\n8\nPRYANIK\n',
+                        f'10\n{x_out(x, 1):.{PRECISION}}\n20\n{y_out(y, 1):.{PRECISION}}\n30\n{v3:.{PRECISION}}\n',
+                        f'11\n{x_out(x, 0):.{PRECISION}}\n21\n{y_out(y, 1):.{PRECISION}}\n31\n{v4:.{PRECISION}}\n',
+                        f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                        '62\n0\n0\n',
+                        '3DFACE\n8\nPRYANIK\n',
+                        f'10\n{x_out(x, 0):.{PRECISION}}\n20\n{y_out(y, 1):.{PRECISION}}\n30\n{v4:.{PRECISION}}\n',
+                        f'11\n{x_out(x, 0):.{PRECISION}}\n21\n{y_out(y, 0):.{PRECISION}}\n31\n{v1:.{PRECISION}}\n',
+                        f'12\n{x_out(x, 0.5):.{PRECISION}}\n22\n{y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                        '62\n0\n0\n',
+                    ]
+                )  # Pyramid construction complete. Ave me!
 
     resultfile.write('ENDSEC\n0\nEOF\n')  # closing object
 
