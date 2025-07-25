@@ -57,7 +57,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.19.8.1'
+__version__ = '3.19.25.15'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -89,12 +89,8 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         """
 
-        cx = int(x)
-        cy = int(Y - 1 - y)  # Mirroring from Photoshop to Wavefront
-        cx = max(0, cx)
-        cx = min((X - 1), cx)
-        cy = max(0, cy)
-        cy = min((Y - 1), cy)
+        cx = min((X - 1), max(0, int(x)))
+        cy = min((Y - 1), max(0, int(Y - 1 - y)))
 
         channelvalue = image3d[cy][cx][z]
 

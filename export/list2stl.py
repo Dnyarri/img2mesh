@@ -60,7 +60,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.19.8.1'
+__version__ = '3.19.25.15'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -94,12 +94,8 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         """
 
-        cx = int(x)
-        cy = int(Y - 1 - y)  # Mirroring from Photoshop to STL
-        cx = max(0, cx)
-        cx = min((X - 1), cx)
-        cy = max(0, cy)
-        cy = min((Y - 1), cy)
+        cx = min((X - 1), max(0, int(x)))
+        cy = min((Y - 1), max(0, int(Y - 1 - y)))
 
         channelvalue = image3d[cy][cx][z]
 
@@ -144,7 +140,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         nz = ((x2 - x1) * (y3 - y1)) - ((x3 - x1) * (y2 - y1))
 
         length = sqrt((nx * nx) + (ny * ny) + (nz * nz))
-        # Pythagoras, in a good sence of this word
+        # Pythagoras, in a good sense of this word
 
         return f'{nx / length:.{PRECISION}} {ny / length:.{PRECISION}} {nz / length:.{PRECISION}}'
         # Output as space separated string since it's the simplest format for further use

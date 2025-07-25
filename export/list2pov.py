@@ -67,7 +67,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.19.8.1'
+__version__ = '3.19.25.15'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -97,12 +97,8 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         """
 
-        cx = int(x)
-        cy = int(y)  # nearest neighbor for float input
-        cx = max(0, cx)
-        cx = min((X - 1), cx)
-        cy = max(0, cy)
-        cy = min((Y - 1), cy)
+        cx = min((X - 1), max(0, int(x)))
+        cy = min((Y - 1), max(0, int(y)))
 
         channelvalue = image3d[cy][cx][z]
 
@@ -324,8 +320,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             │ 1 │ 2 │
             ├───┼───┤
             │ 4 │ 3 │
-            └───┴───┘
-            """
+            └───┴───┘ """
             v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
             v2 = src_lum(x + 1, y)
             v3 = src_lum(x + 1, y + 1)
