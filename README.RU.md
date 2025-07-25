@@ -32,11 +32,12 @@
 
 [![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png "Preview of img2mesh output files in one folder")](https://dnyarri.github.io/img2mesh.html)
 
-## Внешние зависимости
+## Необходимые исходные и Внешние зависимости
 
-1. [PyPNG](https://gitlab.com/drj11/pypng). Копия включена в дистрибутив img2mesh.
-2. [PyPNM](https://pypi.org/project/PyPNM/). Копия включена в дистрибутив img2mesh.
-3. Tkinter. Входит в состав типового дистрибутива CPython.
+1. [Python](https://www.python.org/) 3.10 или посвежее.
+2. [PyPNG](https://gitlab.com/drj11/pypng). Копия включена в дистрибутив img2mesh.
+3. [PyPNM](https://pypi.org/project/PyPNM/). Копия включена в дистрибутив img2mesh.
+4. Tkinter. Обыкновенно входит в состав типового дистрибутива CPython.
 
 ## Installation and Usage
 

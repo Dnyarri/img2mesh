@@ -4,7 +4,7 @@
 
 # Bitmap to POVRay 3D triangle mesh converter
 
-Python program for conversion of bitmap heightfield (in [PNG](http://www.libpng.org/pub/png/) or [PGM/PPM](https://dnyarri.github.io/pypnm.html) format) to 3D triangle mesh in [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
+Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) to 3D triangle mesh in [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
 
 [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html)
 
@@ -32,11 +32,12 @@ Python program for conversion of bitmap heightfield (in [PNG](http://www.libpng.
 
 [![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png "Preview of img2mesh output files in one folder")](https://dnyarri.github.io/img2mesh.html)
 
-## Dependencies
+## Prerequisite and Dependencies
 
-1. [PyPNG](https://gitlab.com/drj11/pypng). Copy included into current img2mesh distribution.
-2. [PyPNM](https://pypi.org/project/PyPNM/). Copy included into current img2mesh distribution.
-3. Tkinter. Included into standard CPython distribution.
+1. [Python](https://www.python.org/) 3.10 or above.
+2. [PyPNG](https://gitlab.com/drj11/pypng). Copy included into current img2mesh distribution.
+3. [PyPNM](https://pypi.org/project/PyPNM/). Copy included into current img2mesh distribution.
+4. Tkinter. Normally included into standard CPython distribution.
 
 ## Installation and Usage
 
@@ -44,7 +45,7 @@ Programs distribution is rather self-contained and is supposed to run right out 
 
 ### For developers
 
-Module list2mesh, including 3D-export functions, may be copied and used by other developers at will.
+Module list2mesh, containing 3D-export functions, may be copied and used by other developers at will.
 
 ## References
 
