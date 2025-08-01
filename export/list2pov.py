@@ -54,6 +54,8 @@ Simplified mesh writing syntaxis with functions; intensity multiplication on opa
 
 3.19.8.1    Clipping zero or transparent pixels.
 
+3.20.1.9    Since pyramid top is exactly in the middle, interpolation replaced with average to speed things up.
+
 -------------------
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
@@ -67,7 +69,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.19.25.15'
+__version__ = '3.20.1.9'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -325,7 +327,9 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             v2 = src_lum(x + 1, y)
             v3 = src_lum(x + 1, y + 1)
             v4 = src_lum(x, y + 1)
-            v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
+            v0 = (v1 + v2 + v3 + v4) / 4  # Center of the pyramid
+            # In this case interpolation may be replaced with average above.
+            # v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
             # Finally going to build a pyramid!
             # Triangles are described clockwise.
