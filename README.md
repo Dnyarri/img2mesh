@@ -16,17 +16,17 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 ## Project content
 
-- **img2mesh** - suitable GUI frontend comprising all programs and functions.
+- [**img2mesh.py**](https://github.com/Dnyarri/img2mesh/blob/main/img2mesh.py) - suitable GUI frontend comprising all programs and functions.
 
 - **list2mesh** module, including:
 
-  - **list2pov**: nested 3D list to POV-Ray scene conversion and output. Exported file contain fully operational scene;
+  - [**list2pov.py**](https://github.com/Dnyarri/img2mesh/blob/main/export/list2pov.py): nested 3D list to POV-Ray scene conversion and output. Exported file contain fully operational scene;
 
-  - **list2stl**: nested 3D list to stereolithography ascii STL object conversion and output. Exported file contain elevation map mesh plus sides and bottom as needed for 3D printer;
+  - [**list2stl.py**](https://github.com/Dnyarri/img2mesh/blob/main/export/list2stl.py): nested 3D list to stereolithography ascii STL object conversion and output. Exported file contain elevation map mesh plus sides and bottom as needed for 3D printer;
 
-  - **list2obj**: nested 3D list to Wavefront OBJ conversion and output. Exported file contain elevation map mesh only;
+  - [**list2obj.py**](https://github.com/Dnyarri/img2mesh/blob/main/export/list2obj.py): nested 3D list to Wavefront OBJ conversion and output. Exported file contain elevation map mesh only;
 
-  - **list2dxf**: nested 3D list to Autodesk ascii DXF conversion and output Exported file contain elevation map mesh only;
+  - [**list2dxf.py**](https://github.com/Dnyarri/img2mesh/blob/main/export/list2dxf.py): nested 3D list to Autodesk ASCII DXF conversion and output Exported file contain elevation map mesh only;
 
 - **pypng** and **pypnm** modules contain components providing PNG and PPM image files reading as nested 3D lists.
 
@@ -41,11 +41,11 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 ## Installation and Usage
 
-Programs distribution is rather self-contained and is supposed to run right out of the box. Program is equipped with minimal GUI, so all you have to do after starting a program is use "Open..." dialog to open image file, then use "Export..." to name 3D file to be created, then wait while program does the job, then open resulting file with suitable 3D software and render the scene.
+Programs distribution is rather self-contained and is supposed to run right out of the box. Program is equipped with minimal GUI, so all you have to do after starting a program is open image file using double-click into dialog or Ctrl+O keys, or bring to life main "FIle" menu with right-click or Alt+F, then use "Export..." to name 3D file to be created, then wait while program does the job, then open resulting file with suitable 3D software and render the scene.
 
 ### For developers
 
-Module list2mesh, containing 3D-export functions, may be copied and used by other developers at will.
+Export module, containing 3D-export functions, may be copied and used by other developers at will.
 
 ## References
 
