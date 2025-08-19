@@ -30,12 +30,13 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.20.1.9'
+__version__ = '3.20.20.3'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
 
 from pathlib import Path
+from time import ctime
 from tkinter import Button, Frame, Label, Menu, PhotoImage, Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showinfo
@@ -47,25 +48,31 @@ from pypnm.pnmlpnm import list2bin, pnm2list
 
 def DisMiss(event=None) -> None:
     """Kill dialog and continue"""
+
     sortir.destroy()
 
 
 def ShowMenu(event) -> None:
     """Pop menu up (or sort of drop it down)"""
+
     menu01.post(event.x_root, event.y_root)
 
 
 def ShowInfo(event=None) -> None:
     """Show image information"""
+
+    file_size = Path(sourcefilename).stat().st_size
+    file_size_str = f'{file_size / 1048576:.2f} Mb' if (file_size > 1048576) else f'{file_size / 1024:.2f} Kb' if (file_size > 1024) else f'{file_size} bytes'
     showinfo(
         title='Image information',
-        message=f'File: {sourcefilename}',
-        detail=f'Image: X={X}, Y={Y}, Z={Z}, maxcolors={maxcolors}',
+        message=f'File properties:\nLocation: {sourcefilename}\nSize: {file_size_str}\nLast modified: {ctime(Path(sourcefilename).stat().st_mtime)}',
+        detail=f'Image properties, as represented internally:\nWidth: {X} px\nHeight: {Y} px\nChannels: {Z} channel{"s" if Z > 1 else ""}\nColor depth: {maxcolors + 1} gradations/channel',
     )
 
 
 def UINormal() -> None:
     """Normal UI state, buttons enabled"""
+
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
             widget.config(state='normal')
@@ -74,6 +81,7 @@ def UINormal() -> None:
 
 def UIBusy() -> None:
     """Busy UI state, buttons disabled"""
+
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
             widget.config(state='disabled')
@@ -82,7 +90,8 @@ def UIBusy() -> None:
 
 
 def GetSource(event=None) -> None:
-    """Opening source image and redefining other controls state"""
+    """Open source image and redefine other controls state"""
+
     global zoom_factor, zoom_do, zoom_show, preview, preview_data
     global X, Y, Z, maxcolors, image3D, sourcefilename
     global info_normal
@@ -104,11 +113,11 @@ def GetSource(event=None) -> None:
         └────────────────────────────────────────┘ """
 
     if Path(sourcefilename).suffix == '.png':
-        # Reading image as list
+        # ↓ Reading image as list
         X, Y, Z, maxcolors, image3D, info = png2list(sourcefilename)
 
     elif Path(sourcefilename).suffix in ('.ppm', '.pgm', '.pbm'):
-        # Reading image as list
+        # ↓ Reading image as list
         X, Y, Z, maxcolors, image3D = pnm2list(sourcefilename)
 
     else:
@@ -149,37 +158,39 @@ def GetSource(event=None) -> None:
 
     preview = zoom_do[zoom_factor]
     zanyato.config(image=preview, compound='none', justify='center', background=zanyato.master['background'], relief='flat', borderwidth=1)
-    # binding zoom on preview click
+    # ↓ binding zoom on preview click
     zanyato.bind('<Control-Button-1>', zoomIn)  # Ctrl + left click
     zanyato.bind('<Double-Control-Button-1>', zoomIn)  # Ctrl + left click too fast
     zanyato.bind('<Alt-Button-1>', zoomOut)  # Alt + left click
     zanyato.bind('<Double-Alt-Button-1>', zoomOut)  # Alt + left click too fast
     sortir.bind_all('<MouseWheel>', zoomWheel)  # Wheel
     sortir.bind_all('<Control-i>', ShowInfo)
-    # enabling zoom buttons
+    # ↓ enabling zoom buttons
     butt_plus.config(state='normal', cursor='hand2')
     butt_minus.config(state='normal', cursor='hand2')
-    # updating zoom label display
+    # ↓ updating zoom label display
     label_zoom.config(text=zoom_show[zoom_factor])
-    # enabling "Save as..."
+    # ↓ enabling "Save as..."
     menu01.entryconfig('Export POV-Ray...', state='normal')  # Instead of name numbers from 0 may be used
     menu01.entryconfig('Export OBJ...', state='normal')
     menu01.entryconfig('Export DXF...', state='normal')
     menu01.entryconfig('Export STL...', state='normal')
     menu01.entryconfig('Image Info...', state='normal')
-
     UINormal()
 
 
 def SaveAsPOV() -> None:
     """Once pressed on Export POV"""
+
+    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save POV-Ray file',
         filetypes=[
             ('POV-Ray file', '.pov .inc'),
             ('All Files', '*.*'),
         ],
-        defaultextension=('POV-Ray scene file', '.pov'),
+        defaultextension='.pov',
+        initialfile=Path(sourcefilename).stem + '_Mesh.pov',
     )
     if savefilename == '':
         return None
@@ -187,23 +198,23 @@ def SaveAsPOV() -> None:
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to POV and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
-
     UIBusy()
-
     list2pov.list2pov(image3D, maxcolors, savefilename)
-
     UINormal()
 
 
 def SaveAsOBJ() -> None:
     """Once pressed on Export OBJ"""
+
+    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save Wavefront OBJ file',
         filetypes=[
             ('Wavefront OBJ', '.obj'),
             ('All Files', '*.*'),
         ],
-        defaultextension=('Wavefront OBJ', '.obj'),
+        defaultextension='.obj',
+        initialfile=Path(sourcefilename).stem + '.obj',
     )
     if savefilename == '':
         return None
@@ -211,48 +222,47 @@ def SaveAsOBJ() -> None:
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to OBJ and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
-
     UIBusy()
-
     list2obj.list2obj(image3D, maxcolors, savefilename)
-
     UINormal()
 
 
 def SaveAsSTL() -> None:
     """Once pressed on Export STL"""
+
+    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save STL file',
         filetypes=[
             ('Stereolithography STL', '.stl'),
             ('All Files', '*.*'),
         ],
-        defaultextension=('Stereolithography STL', '.stl'),
+        defaultextension='.stl',
+        initialfile=Path(sourcefilename).stem + '.stl',
     )
     if savefilename == '':
-        UINormal()
         return None
 
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to STL and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
-
     UIBusy()
-
     list2stl.list2stl(image3D, maxcolors, savefilename)
-
     UINormal()
 
 
 def SaveAsDXF() -> None:
     """Once pressed on Export DXF"""
+
+    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save Autodesk DXF file',
         filetypes=[
             ('Autodesk DXF', '.dxf'),
             ('All Files', '*.*'),
         ],
-        defaultextension=('Autodesk DXF', '.dxf'),
+        defaultextension='.dxf',
+        initialfile=Path(sourcefilename).stem + '.dxf',
     )
     if savefilename == '':
         return None
@@ -260,24 +270,22 @@ def SaveAsDXF() -> None:
     """ ┌─────────────────────────────────────────────────────┐
         │ Converting list to DXF and saving as "savefilename" │
         └─────────────────────────────────────────────────────┘ """
-
     UIBusy()
-
     list2dxf.list2dxf(image3D, maxcolors, savefilename)
-
     UINormal()
 
 
 def zoomIn(event=None) -> None:
-    """Zooming preview in"""
+    """Zoom preview in"""
+
     global zoom_factor, preview
     zoom_factor = min(zoom_factor + 1, 4)  # max zoom 5
     preview = PhotoImage(data=preview_data)
     preview = zoom_do[zoom_factor]
     zanyato.config(image=preview, compound='none')
-    # updating zoom factor display
+    # ↓ updating zoom factor display
     label_zoom.config(text=zoom_show[zoom_factor])
-    # reenabling +/- buttons
+    # ↓ reenabling +/- buttons
     butt_minus.config(state='normal', cursor='hand2')
     if zoom_factor == 4:  # max zoom 5
         butt_plus.config(state='disabled', cursor='arrow')
@@ -286,7 +294,8 @@ def zoomIn(event=None) -> None:
 
 
 def zoomOut(event=None) -> None:
-    """Zooming preview out"""
+    """Zoom preview out"""
+
     global zoom_factor, preview
     zoom_factor = max(zoom_factor - 1, -4)  # min zoom 1/5
     preview = PhotoImage(data=preview_data)
@@ -303,7 +312,8 @@ def zoomOut(event=None) -> None:
 
 
 def zoomWheel(event) -> None:
-    """Starting zoomIn or zoomOut by mouse wheel"""
+    """zoomIn or zoomOut by mouse wheel"""
+
     if event.delta < 0:
         zoomOut()
     if event.delta > 0:
@@ -320,7 +330,6 @@ sourcefilename = X = Y = Z = maxcolors = None
 sortir = Tk()
 
 sortir.title('img2mesh')
-sortir.geometry('+200+100')
 sortir.minsize(128, 128)
 
 icon_path = Path(__file__).resolve().parent / 'vaba.ico'
@@ -329,7 +338,7 @@ if icon_path.exists():
 else:
     sortir.iconphoto(True, PhotoImage(data=b'P6\n2 2\n255\n\xff\x00\x00\xff\xff\x00\x00\x00\xff\x00\xff\x00'))
 
-# Info statuses dictionaries
+# ↓ Info statuses dictionaries
 info_normal = {'txt': f'img2mesh {__version__}', 'fg': 'grey', 'bg': 'grey90'}
 info_busy = {'txt': 'BUSY, PLEASE WAIT', 'fg': 'red', 'bg': 'yellow'}
 
@@ -369,6 +378,7 @@ zanyato = Label(
     cursor='arrow',
 )
 zanyato.bind('<Double-Button-1>', GetSource)
+frame_img.bind('<Double-Button-1>', GetSource)
 zanyato.pack(side='top', padx=0, pady=(0, 2))
 
 frame_zoom = Frame(frame_img, width=300, borderwidth=2, relief='groove')
@@ -382,5 +392,9 @@ butt_minus.pack(side='right', padx=0, pady=0, fill='both')
 
 label_zoom = Label(frame_zoom, text='Zoom 1:1', font=('courier', 8), state='disabled')
 label_zoom.pack(side='left', anchor='n', padx=2, pady=0, fill='both')
+
+# ↓ Center window horizontally, +100 vertically
+sortir.update()
+sortir.geometry(f'+{(sortir.winfo_screenwidth() - sortir.winfo_width()) // 2}+100')
 
 sortir.mainloop()

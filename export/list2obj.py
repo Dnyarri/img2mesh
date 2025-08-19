@@ -83,13 +83,10 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         ╚═══════════════╝ """
 
     def src(x: int | float, y: int | float, z: int) -> int | float:
-        """
-        Analog of src from FilterMeister, force repeat edge instead of out of range.
+        """Analog of src from FilterMeister, force repeat edge instead of out of range.
         Returns channel z value for pixel x, y.
 
-        **WARNING:** Coordinate system mirrored against Y!
-
-        """
+        **WARNING:** Coordinate system mirrored against Y!"""
 
         cx = min((X - 1), max(0, int(x)))
         cy = min((Y - 1), max(0, int(Y - 1 - y)))
