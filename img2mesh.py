@@ -30,7 +30,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.20.20.3'
+__version__ = '3.21.2.16'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -77,6 +77,7 @@ def UINormal() -> None:
         if widget.winfo_class() in ('Label', 'Button'):
             widget.config(state='normal')
     info_string.config(text=info_normal['txt'], foreground=info_normal['fg'], background=info_normal['bg'])
+    sortir.update()
 
 
 def UIBusy() -> None:
@@ -157,7 +158,7 @@ def GetSource(event=None) -> None:
     }
 
     preview = zoom_do[zoom_factor]
-    zanyato.config(image=preview, compound='none', justify='center', background=zanyato.master['background'], relief='flat', borderwidth=1)
+    zanyato.config(image=preview, compound='none', background=zanyato.master['background'], relief='flat', borderwidth=1)
     # ↓ binding zoom on preview click
     zanyato.bind('<Control-Button-1>', zoomIn)  # Ctrl + left click
     zanyato.bind('<Double-Control-Button-1>', zoomIn)  # Ctrl + left click too fast
@@ -177,6 +178,7 @@ def GetSource(event=None) -> None:
     menu01.entryconfig('Export STL...', state='normal')
     menu01.entryconfig('Image Info...', state='normal')
     UINormal()
+    sortir.geometry(f'+{(sortir.winfo_screenwidth() - sortir.winfo_width()) // 2}+{(sortir.winfo_screenheight() - sortir.winfo_height()) // 2 - 32}')
 
 
 def SaveAsPOV() -> None:
@@ -332,9 +334,20 @@ sortir = Tk()
 sortir.title('img2mesh')
 sortir.minsize(128, 128)
 
+# ↓ PNG icon.
+#   Result looks sharper on screen than ICO.
+icon_path_48 = Path(__file__).resolve().parent / '48.png'
+icon_path_32 = Path(__file__).resolve().parent / '32.png'
+icon_path_16 = Path(__file__).resolve().parent / '16.png'
+
+# ↓ ICO icon.
+#   Tkinter seem to read icon with index=0 and interpolate to unknown size.
 icon_path = Path(__file__).resolve().parent / 'vaba.ico'
-if icon_path.exists():
-    sortir.iconbitmap(str(icon_path))
+
+if icon_path_48.exists() and icon_path_32.exists() and icon_path_16.exists():
+    sortir.iconphoto(True, PhotoImage(file=icon_path_48), PhotoImage(file=icon_path_32), PhotoImage(file=icon_path_16))
+elif icon_path.exists():
+    sortir.iconbitmap(icon_path)
 else:
     sortir.iconphoto(True, PhotoImage(data=b'P6\n2 2\n255\n\xff\x00\x00\xff\xff\x00\x00\x00\xff\x00\xff\x00'))
 
@@ -363,7 +376,7 @@ sortir.bind_all('<Control-o>', GetSource)
 sortir.bind_all('<Control-q>', DisMiss)
 
 frame_img = Frame(sortir, borderwidth=2, relief='groove')
-frame_img.pack(side='top')
+frame_img.pack(side='top', anchor='center', expand=True)
 
 zanyato = Label(
     frame_img,
@@ -384,10 +397,10 @@ zanyato.pack(side='top', padx=0, pady=(0, 2))
 frame_zoom = Frame(frame_img, width=300, borderwidth=2, relief='groove')
 frame_zoom.pack(side='bottom')
 
-butt_plus = Button(frame_zoom, text='+', font=('courier', 8), width=2, cursor='arrow', justify='center', state='disabled', borderwidth=1, command=zoomIn)
+butt_plus = Button(frame_zoom, text='+', font=('courier', 8), width=2, cursor='arrow', state='disabled', borderwidth=1, command=zoomIn)
 butt_plus.pack(side='left', padx=0, pady=0, fill='both')
 
-butt_minus = Button(frame_zoom, text='-', font=('courier', 8), width=2, cursor='arrow', justify='center', state='disabled', borderwidth=1, command=zoomOut)
+butt_minus = Button(frame_zoom, text='-', font=('courier', 8), width=2, cursor='arrow', state='disabled', borderwidth=1, command=zoomOut)
 butt_minus.pack(side='right', padx=0, pady=0, fill='both')
 
 label_zoom = Label(frame_zoom, text='Zoom 1:1', font=('courier', 8), state='disabled')
