@@ -34,14 +34,17 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 ## Prerequisite and Dependencies
 
-1. [Python](https://www.python.org/) 3.10 or above.
+1. [Python](https://www.python.org/) 3.11 or above.
 2. [PyPNG](https://gitlab.com/drj11/pypng). Copy included into current img2mesh distribution.
 3. [PyPNM](https://pypi.org/project/PyPNM/). Copy included into current img2mesh distribution.
 4. Tkinter. Normally included into standard CPython distribution.
 
+> [!NOTE]
+> Since img2mesh 3.21.2.16 PyPNM version included into distribution updated to [PyPNM "Victory 2" main](https://github.com/Dnyarri/PyPNM), intended to be used with Python 3.11 and above. The only actual limitation is that main version does not have a workaround for displaying 16 bpc images necessary for old Tkinter included into old CPython distributions. If you want bringing old Tkinter compatibility back, download [PyPNM extended compatibility version](https://github.com/Dnyarri/PyPNM/tree/py34) and plug it in manually.
+
 ## Installation and Usage
 
-Programs distribution is rather self-contained and is supposed to run right out of the box. Program is equipped with minimal GUI, so all you have to do after starting a program is open image file using double-click into dialog or Ctrl+O keys, or bring to life main "FIle" menu with right-click or Alt+F, then use "Export..." to name 3D file to be created, then wait while program does the job, then open resulting file with suitable 3D software and render the scene.
+Programs distribution is rather self-contained and is supposed to run right out of the box assuming standard CPython is installed on your system. Program is equipped with minimal GUI, so all you have to do after starting a program is open image file using double-click into dialog or Ctrl+O keys, or bring to life main "File" menu with right-click or Alt+F, then use "Export..." to name 3D file to be created, then wait while program does the job, then open resulting file with suitable 3D software and render the scene.
 
 ### For developers
 
