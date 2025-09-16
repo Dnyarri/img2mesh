@@ -30,7 +30,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.21.2.16'
+__version__ = '3.21.16.16'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -334,19 +334,11 @@ sortir = Tk()
 sortir.title('img2mesh')
 sortir.minsize(128, 128)
 
-# ↓ PNG icon.
-#   Result looks sharper on screen than ICO.
-icon_path_48 = Path(__file__).resolve().parent / '48.png'
-icon_path_32 = Path(__file__).resolve().parent / '32.png'
-icon_path_16 = Path(__file__).resolve().parent / '16.png'
-
 # ↓ ICO icon.
 #   Tkinter seem to read icon with index=0 and interpolate to unknown size.
 icon_path = Path(__file__).resolve().parent / 'vaba.ico'
 
-if icon_path_48.exists() and icon_path_32.exists() and icon_path_16.exists():
-    sortir.iconphoto(True, PhotoImage(file=icon_path_48), PhotoImage(file=icon_path_32), PhotoImage(file=icon_path_16))
-elif icon_path.exists():
+if icon_path.exists():
     sortir.iconbitmap(icon_path)
 else:
     sortir.iconphoto(True, PhotoImage(data=b'P6\n2 2\n255\n\xff\x00\x00\xff\xff\x00\x00\x00\xff\x00\xff\x00'))
