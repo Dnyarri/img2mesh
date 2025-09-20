@@ -44,7 +44,12 @@ Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 
 3.19.8.1    Clipping zero or transparent pixels.
 
-3.20.1.9    Since pyramid top is exactly in the middle, interpolation replaced with average to speed things up.
+3.20.1.9    Since pyramid top is exactly in the middle,
+interpolation replaced with average to speed things up.
+
+3.21.19.19  New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
+depending on neighbour differences threshold.
+Threshold set ad hoc and needs more experiments.
 
 -------------------
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
@@ -59,13 +64,13 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.20.1.9'
+__version__ = '3.21.19.19'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
 
 
-def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str) -> None:
+def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
     """Converting nested 3D list to Wavefront OBJ heightfield triangle mesh.
 
     - `image3d` - image as list of lists of lists of int channel values;
@@ -115,13 +120,13 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         fx = float(x)  # Force float input coordinates for interpolation
         fy = float(y)
 
-        # Neighbor pixels coordinates (square corners x0,y0; x1,y0; x0,y1; x1,y1)
+        # ↓ Neighbor pixels coordinates (square corners x0,y0; x1,y0; x0,y1; x1,y1)
         x0 = int(x)
         x1 = x0 + 1
         y0 = int(y)
         y1 = y0 + 1
 
-        # Reading corners src_lum (see scr_lum above) and interpolating
+        # ↓ Reading corners src_lum (see scr_lum above) and interpolating
         channelvalue = src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
 
         return channelvalue
@@ -130,7 +135,7 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         ║ Writing OBJ file ║
         ╚══════════════════╝ """
 
-    # Global positioning and scaling to tweak.
+    # ↓ Global positioning and scaling to tweak.
 
     X_OFFSET = -0.5 * (X - 1.0)  # To be added BEFORE rescaling to center object.
     Y_OFFSET = -0.5 * (Y - 1.0)  # To be added BEFORE rescaling to center object
@@ -145,9 +150,9 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         """Recalculate source y to result y"""
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
+    # ↓ Float output precision. Max for Python double is supposed to be 16, however
+    #   for 16-bit images 7 is enough.
     PRECISION = '7f'
-    # Float output precision. Max for Python double is supposed to be 16, however
-    # for 16-bit images 7 is enough.
 
     resultfile = open(resultfilename, 'w')
 
@@ -168,43 +173,66 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             v2 = src_lum(x + 1, y)
             v3 = src_lum(x + 1, y + 1)
             v4 = src_lum(x, y + 1)
-            v0 = (v1 + v2 + v3 + v4) / 4  # Center of the pyramid
-            # In this case interpolation may be replaced with average above.
-            # v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
-            # Finally going to build a pyramid!
-            # Triangles are described clockwise, then connection order reset counterclockwise.
+            # ↓ Switch between geometry №1 and №3.
+            #   Threshold set ad hoc and is subject to change
+            if abs(v1 - v3) > threshold or abs(v2 - v4) > threshold:
+                if abs(v1 - v3) > abs(v2 - v4):
+                    v0 = (v2 + v4) / 2
+                else:
+                    v0 = (v1 + v3) / 2
+            else:
+                v0 = (v1 + v2 + v3 + v4) / 4
 
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+            # ↓ Finally going to build a pyramid!
+            #   Triangles are described clockwise, then connection order reset counterclockwise.
+
+            if (v1 + v2 + v0) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
                 resultfile.writelines(
                     [
                         f'v {x_out(x, 0):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
                         f'v {x_out(x, 1):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
                         f'v {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        'f -2 -3 -1\n',  # triangle 1-2-0, order changed to counterclockwise that means normal up
+                        'f -2 -3 -1\n',
+                    ]
+                )  # ↑ triangle 1-2-0, order changed to counterclockwise that means normal up
+            if (v0 + v2 + v3) > (0.5 / maxcolors):
+                resultfile.writelines(
+                    [
                         f'v {x_out(x, 1):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
                         f'v {x_out(x, 1):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
                         f'v {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        'f -2 -3 -1\n',  # triangle 2-3-0, order changed to counterclockwise
+                        'f -2 -3 -1\n',
+                    ]
+                )  # ↑ triangle 2-3-0, order changed to counterclockwise
+            if (v0 + v3 + v4) > (0.5 / maxcolors):
+                resultfile.writelines(
+                    [
                         f'v {x_out(x, 1):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
                         f'v {x_out(x, 0):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
                         f'v {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        'f -2 -3 -1\n',  # triangle 3-4-0, order changed to counterclockwise
+                        'f -2 -3 -1\n',
+                    ]
+                )  # ↑ triangle 3-4-0, order changed to counterclockwise
+            if (v0 + v1 + v4) > (0.5 / maxcolors):
+                resultfile.writelines(
+                    [
                         f'v {x_out(x, 0):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
                         f'v {x_out(x, 0):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
                         f'v {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        'f -2 -3 -1\n',  # triangle 4-1-0, order changed to counterclockwise
+                        'f -2 -3 -1\n',
                     ]
-                )  # Pyramid construction complete. Ave me!
+                )  # ↑ triangle 4-1-0, order changed to counterclockwise
+            # ↑ Pyramid construction complete. Ave me!
 
     resultfile.write('# end pryanik_nepechatnyj')  # closing object
 
-    # Close output
+    # ↓ Close output
     resultfile.close()
 
     return None
+# ↑ list2obj finished
 
-
-# Procedure end, main body begins
+# ↓ Procedure end, main body begins
 if __name__ == '__main__':
     print('Module to be imported, not run as standalone')

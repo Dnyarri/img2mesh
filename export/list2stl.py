@@ -37,7 +37,8 @@ History
 
 1.0.0.0     Initial production release.
 
-1.9.1.0     Multiple changes. Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+1.9.1.0     Multiple changes.
+Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
 
 1.13.4.0    Rewritten from standalone img2stl to module list2stl.
 
@@ -47,7 +48,12 @@ History
 
 3.19.8.1    Clipping zero or transparent pixels.
 
-3.20.1.9    Since pyramid top is exactly in the middle, interpolation replaced with average to speed things up.
+3.20.1.9    Since pyramid top is exactly in the middle,
+interpolation replaced with average to speed things up.
+
+3.21.19.19  New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
+depending on neighbour differences threshold.
+Threshold set ad hoc and needs more experiments.
 
 -------------------
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
@@ -62,7 +68,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.20.1.9'
+__version__ = '3.21.19.19'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -70,7 +76,7 @@ __status__ = 'Production'
 from math import sqrt
 
 
-def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str) -> None:
+def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
     """Converting nested 3D list to STL heightfield triangle mesh.
 
     - `image3d` - image as list of lists of lists of int channel values;
@@ -120,13 +126,13 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         fx = float(x)  # Force float input coordinates for interpolation
         fy = float(y)
 
-        # Neighbor pixels coordinates (square corners x0,y0; x1,y0; x0,y1; x1,y1)
+        # ↓ Neighbor pixels coordinates (square corners x0,y0; x1,y0; x0,y1; x1,y1)
         x0 = int(x)
         x1 = x0 + 1
         y0 = int(y)
         y1 = y0 + 1
 
-        # Reading corners src_lum (see scr_lum above) and interpolating
+        # ↓ Reading corners src_lum (see scr_lum above) and interpolating
         channelvalue = src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
 
         return channelvalue
@@ -139,16 +145,18 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         nz = ((x2 - x1) * (y3 - y1)) - ((x3 - x1) * (y2 - y1))
 
         length = sqrt((nx * nx) + (ny * ny) + (nz * nz))
-        # Pythagoras, in a good sense of this word
+        # ↑ Pythagoras, in a good sense of this word
 
         return f'{nx / length:.{PRECISION}} {ny / length:.{PRECISION}} {nz / length:.{PRECISION}}'
-        # Output as space separated string since it's the simplest format for further use
+        # ↑ Output as space separated string since it's the simplest format for further use
 
     """ ╔══════════════════╗
         ║ Writing STL file ║
         ╚══════════════════╝ """
 
-    # Global positioning and scaling to tweak. Offset supposed to make everyone feeling positive, rescale supposed to scale anything to [0..1.0] regardless of what the units are
+    # ↓ Global positioning and scaling to tweak.
+    #   Offset supposed to make everyone feeling positive, rescale supposed to scale anything
+    #   to [0..1.0] regardless of what the units are.
 
     X_OFFSET = Y_OFFSET = 1.0
 
@@ -162,8 +170,8 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         """Recalculate source y to result y"""
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
+    # ↓ Float output precision. Set single according to  Ref. [2]
     PRECISION = '6e'
-    # Float output precision. Set single according to  Ref. [2]
 
     """ ┌────────────────────────────────────────────────────┐
         │ Mesh. STL header will be added during file writing │
@@ -179,17 +187,27 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             v2 = src_lum(x + 1, y)
             v3 = src_lum(x + 1, y + 1)
             v4 = src_lum(x, y + 1)
-            v0 = (v1 + v2 + v3 + v4) / 4  # Center of the pyramid
-            # In this case interpolation below may be replaced with average above,
-            # although FC.EXE shows that it affects some (less that 1%) normals at the level of e-16.
-            # Presumably average gives more correct errors ;-)
-            # v0 = src_lum_blin(x + 0.5, y + 0.5)  # Center of the pyramid
 
-            # Finally going to build a pyramid!
-            # Triangles are described counterclockwise.
+            # ↓ Switch between geometry №1 and №3.
+            #   Threshold set ad hoc and is subject to change
+            if abs(v1 - v3) > threshold or abs(v2 - v4) > threshold:
+                # ↓ Geometry №1, better sharp diagonals handling
+                if abs(v1 - v3) > abs(v2 - v4):
+                    v0 = (v2 + v4) / 2  # Fold along 2 - 4 diagonal
+                else:
+                    v0 = (v1 + v3) / 2  # Fold along 1 - 3 diagonal
+                # ↓ Fix for cases when only one corner is > 0
+                if v0 == 0:
+                    v0 = (v1 + v2 + v3 + v4) / 4
+            else:
+                # ↓ Geometry №3, better for smooth areas
+                v0 = (v1 + v2 + v3 + v4) / 4
+
+            # ↓ Finally going to build a pyramid!
+            #   Triangles are described counterclockwise.
 
             if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
-                # top part begins
+                # ↓ top part 1-2-0
                 thething_top.extend(
                     [
                         f'  facet normal {normal(x_out(x, 0), y_out(y, 0), v1, x_out(x, 1), y_out(y, 0), v2, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
@@ -199,6 +217,24 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
                         '    endloop\n',
                         '  endfacet\n',
+                    ]
+                )
+                # ↓ bottom part 2-1-0
+                thething_bottom.extend(
+                    [
+                        '  facet normal 0 0 -1\n',
+                        '    outer loop\n',
+                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                        f'      vertex {x_out(x, 0):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                        f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
+                        '    endloop\n',
+                        '  endfacet\n',
+                    ]
+                )
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+                # ↓ top part 2-3-0
+                thething_top.extend(
+                    [
                         f'  facet normal {normal(x_out(x, 1), y_out(y, 0), v2, x_out(x, 1), y_out(y, 1), v3, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
                         '    outer loop\n',
                         f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
@@ -206,12 +242,48 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
                         '    endloop\n',
                         '  endfacet\n',
+                    ]
+                )
+                # ↓ bottom part 3-2-0
+                thething_bottom.extend(
+                    [
+                        '  facet normal 0 0 -1\n',
+                        '    outer loop\n',
+                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                        f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
+                        '    endloop\n',
+                        '  endfacet\n',
+                    ]
+                )
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+                # ↓ top part 3-4-0
+                thething_top.extend(
+                    [
                         f'  facet normal {normal(x_out(x, 1), y_out(y, 1), v3, x_out(x, 0), y_out(y, 1), v4, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
                         '    outer loop\n',
                         f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
                         f'      vertex {x_out(x, 0):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
                         f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
                         '    endloop\n',
+                    ]
+                )
+                # ↓ bottom part 4-3-0
+                thething_bottom.extend(
+                    [
+                        '  facet normal 0 0 -1\n',
+                        '    outer loop\n',
+                        f'      vertex {x_out(x, 0):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                        f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
+                        '    endloop\n',
+                        '  endfacet\n',
+                    ]
+                )
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+                # ↓ top part 4-1-0
+                thething_top.extend(
+                    [
                         '  endfacet\n',
                         f'  facet normal {normal(x_out(x, 0), y_out(y, 1), v4, x_out(x, 0), y_out(y, 0), v1, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
                         '    outer loop\n',
@@ -222,32 +294,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         '  endfacet\n',
                     ]
                 )
-                # top part ends
-
-                # bottom part begins
+                # ↓ bottom part 1-4-0
                 thething_bottom.extend(
                     [
-                        '  facet normal 0 0 -1\n',
-                        '    outer loop\n',
-                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {x_out(x, 0):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                        '  facet normal 0 0 -1\n',
-                        '    outer loop\n',
-                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                        '  facet normal 0 0 -1\n',
-                        '    outer loop\n',
-                        f'      vertex {x_out(x, 0):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {x_out(x, 1):.{PRECISION}} {y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {x_out(x, 0.5):.{PRECISION}} {y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
                         '  facet normal 0 0 -1\n',
                         '    outer loop\n',
                         f'      vertex {x_out(x, 0):.{PRECISION}} {y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
@@ -257,9 +306,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         '  endfacet\n',
                     ]
                 )
-                # bottom part ends
+                # ↑ tops and bottoms ends
 
-            # left side begins
+            # ↓ left side begins
             if x == 0:
                 if v1 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
                     thething_sides.extend(
@@ -285,9 +334,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                             '  endfacet\n',
                         ]
                     )
-            # left side ends
+            # ↑ left side ends
 
-            # right side begins
+            # ↓ right side begins
             if x == (X - 2):
                 if v3 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
                     thething_sides.extend(
@@ -313,9 +362,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                             '  endfacet\n',
                         ]
                     )
-            # right side ends
+            # ↑ right side ends
 
-            # far side begins
+            # ↓ far side begins
             if y == 0:
                 if v2 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
                     thething_sides.extend(
@@ -341,9 +390,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                             '  endfacet\n',
                         ]
                     )
-            # far side ends
+            # ↑ far side ends
 
-            # close side begins
+            # ↓ close side begins
             if y == (Y - 2):
                 if v4 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
                     thething_sides.extend(
@@ -369,8 +418,9 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                             '  endfacet\n',
                         ]
                     )
-            # close side ends
+            # ↑ close side ends
 
+# ↓ Combining all lists to file
     with open(resultfilename, 'w') as resultfile:
         resultfile.write('solid pryanik_nepechatnyj\n')  # STL file header
         resultfile.writelines(thething_top)
@@ -379,8 +429,8 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         resultfile.write('endsolid pryanik_nepechatnyj')  # STL file closing
 
     return None
+# ↑ list2stl finished
 
-
-# Procedure end, main body begins
+# ↓ Procedure end, main body begins
 if __name__ == '__main__':
     print('Module to be imported, not run as standalone')

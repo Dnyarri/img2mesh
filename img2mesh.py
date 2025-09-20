@@ -30,14 +30,14 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.21.16.16'
+__version__ = '3.21.19.19'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
 
 from pathlib import Path
 from time import ctime
-from tkinter import Button, Frame, Label, Menu, PhotoImage, Tk
+from tkinter import Button, DoubleVar, Frame, Label, Menu, Menubutton, PhotoImage, Spinbox, Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showinfo
 
@@ -75,7 +75,10 @@ def UINormal() -> None:
 
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
-            widget.config(state='normal')
+            widget['state'] = 'normal'
+    for widget in frame_control.winfo_children():
+        if widget.winfo_class() in ('Label', 'Spinbox'):
+            widget['state'] = 'normal'
     info_string.config(text=info_normal['txt'], foreground=info_normal['fg'], background=info_normal['bg'])
     sortir.update()
 
@@ -85,7 +88,10 @@ def UIBusy() -> None:
 
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
-            widget.config(state='disabled')
+            widget['state'] = 'disabled'
+    for widget in frame_control.winfo_children():
+        if widget.winfo_class() in ('Label', 'Spinbox'):
+            widget['state'] = 'disabled'
     info_string.config(text=info_busy['txt'], foreground=info_busy['fg'], background=info_busy['bg'])
     sortir.update()
 
@@ -182,7 +188,7 @@ def GetSource(event=None) -> None:
 
 
 def SaveAsPOV() -> None:
-    """Once pressed on Export POV"""
+    """Once selected Export POV"""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -197,16 +203,14 @@ def SaveAsPOV() -> None:
     if savefilename == '':
         return None
 
-    """ ┌─────────────────────────────────────────────────────┐
-        │ Converting list to POV and saving as "savefilename" │
-        └─────────────────────────────────────────────────────┘ """
+    # ↓ Converting list to POV and saving as "savefilename"
     UIBusy()
-    list2pov.list2pov(image3D, maxcolors, savefilename)
+    list2pov.list2pov(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
 def SaveAsOBJ() -> None:
-    """Once pressed on Export OBJ"""
+    """Once selected Export OBJ"""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -221,16 +225,14 @@ def SaveAsOBJ() -> None:
     if savefilename == '':
         return None
 
-    """ ┌─────────────────────────────────────────────────────┐
-        │ Converting list to OBJ and saving as "savefilename" │
-        └─────────────────────────────────────────────────────┘ """
+    # ↓ Converting list to OBJ and saving as "savefilename"
     UIBusy()
-    list2obj.list2obj(image3D, maxcolors, savefilename)
+    list2obj.list2obj(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
 def SaveAsSTL() -> None:
-    """Once pressed on Export STL"""
+    """Once selected Export STL"""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -245,16 +247,14 @@ def SaveAsSTL() -> None:
     if savefilename == '':
         return None
 
-    """ ┌─────────────────────────────────────────────────────┐
-        │ Converting list to STL and saving as "savefilename" │
-        └─────────────────────────────────────────────────────┘ """
+    # ↓ Converting list to STL and saving as "savefilename"
     UIBusy()
-    list2stl.list2stl(image3D, maxcolors, savefilename)
+    list2stl.list2stl(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
 def SaveAsDXF() -> None:
-    """Once pressed on Export DXF"""
+    """Once selected Export DXF"""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -269,11 +269,9 @@ def SaveAsDXF() -> None:
     if savefilename == '':
         return None
 
-    """ ┌─────────────────────────────────────────────────────┐
-        │ Converting list to DXF and saving as "savefilename" │
-        └─────────────────────────────────────────────────────┘ """
+    # ↓ Converting list to DXF and saving as "savefilename"
     UIBusy()
-    list2dxf.list2dxf(image3D, maxcolors, savefilename)
+    list2dxf.list2dxf(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
@@ -303,9 +301,9 @@ def zoomOut(event=None) -> None:
     preview = PhotoImage(data=preview_data)
     preview = zoom_do[zoom_factor]
     zanyato.config(image=preview, compound='none')
-    # updating zoom factor display
+    # ↓ updating zoom factor display
     label_zoom.config(text=zoom_show[zoom_factor])
-    # reenabling +/- buttons
+    # ↓ reenabling +/- buttons
     butt_plus.config(state='normal', cursor='hand2')
     if zoom_factor == -4:  # min zoom 1/5
         butt_minus.config(state='disabled', cursor='arrow')
@@ -332,7 +330,6 @@ sourcefilename = X = Y = Z = maxcolors = None
 sortir = Tk()
 
 sortir.title('img2mesh')
-sortir.minsize(128, 128)
 
 # ↓ ICO icon.
 #   Tkinter seem to read icon with index=0 and interpolate to unknown size.
@@ -344,13 +341,52 @@ else:
     sortir.iconphoto(True, PhotoImage(data=b'P6\n2 2\n255\n\xff\x00\x00\xff\xff\x00\x00\x00\xff\x00\xff\x00'))
 
 # ↓ Info statuses dictionaries
-info_normal = {'txt': f'img2mesh {__version__}', 'fg': 'grey', 'bg': 'grey90'}
-info_busy = {'txt': 'BUSY, PLEASE WAIT', 'fg': 'red', 'bg': 'yellow'}
+info_normal = {
+    'txt': f'img2mesh {__version__}',
+    'fg': 'grey',
+    'bg': 'grey90',
+}
+info_busy = {
+    'txt': 'BUSY, PLEASE WAIT',
+    'fg': 'red',
+    'bg': 'yellow',
+}
+
+# ↓ Buttons dictionaries
+butt = {
+    'font': ('helvetica', 12),
+    'cursor': 'hand2',
+    'border': '2',
+    'relief': 'groove',
+    'overrelief': 'raised',
+    'foreground': 'SystemButtonText',
+    'background': 'SystemButtonFace',
+    'activeforeground': 'dark blue',
+    'activebackground': '#E5F1FB',
+}
 
 info_string = Label(sortir, text=info_normal['txt'], font=('courier', 7), foreground=info_normal['fg'], background=info_normal['bg'], relief='groove')
 info_string.pack(side='bottom', padx=0, pady=(2, 0), fill='both')
 
-menu01 = Menu(sortir, tearoff=False)  # Drop-down
+frame_control = Frame(sortir, borderwidth=2, relief='groove')
+frame_control.pack(side='top', anchor='nw', expand=False)
+
+# ↓ File menu
+butt_file = Menubutton(
+    frame_control,
+    text='File...'.ljust(10, ' '),
+    font=butt['font'],
+    cursor=butt['cursor'],
+    relief=butt['relief'],
+    activeforeground=butt['activeforeground'],
+    activebackground=butt['activebackground'],
+    border=butt['border'],
+    state='normal',
+    indicatoron=False,
+)
+butt_file.pack(side='left', fill='both')
+
+menu01 = Menu(butt_file, tearoff=False)  # Drop-down
 menu01.add_command(label='Open...', state='normal', accelerator='Ctrl+O', command=GetSource)
 menu01.add_separator()
 menu01.add_command(label='Export POV-Ray...', state='disabled', command=SaveAsPOV)
@@ -361,6 +397,16 @@ menu01.add_separator()
 menu01.add_command(label='Image Info...', accelerator='Ctrl+I', state='disabled', command=ShowInfo)
 menu01.add_separator()
 menu01.add_command(label='Exit', state='normal', accelerator='Ctrl+Q', command=DisMiss)
+
+butt_file['menu'] = menu01
+
+# ↓ Threshold control
+info01 = Label(frame_control, text='Threshold:', font=(butt['font'][0], butt['font'][1] - 2), state='disabled')
+info01.pack(side='left', padx=(24, 2))
+
+geometry_threshold = DoubleVar(value=0.05)
+spin01 = Spinbox(frame_control, from_=0, to=1.0, increment=0.01, textvariable=geometry_threshold, state='disabled', width=5, font=butt['font'])
+spin01.pack(side='right', fill='y')
 
 sortir.bind('<Button-3>', ShowMenu)
 sortir.bind_all('<Alt-f>', ShowMenu)
@@ -384,7 +430,7 @@ zanyato = Label(
 )
 zanyato.bind('<Double-Button-1>', GetSource)
 frame_img.bind('<Double-Button-1>', GetSource)
-zanyato.pack(side='top', padx=0, pady=(0, 2))
+zanyato.pack(side='top', padx=16, pady=(16, 2))
 
 frame_zoom = Frame(frame_img, width=300, borderwidth=2, relief='groove')
 frame_zoom.pack(side='bottom')
@@ -400,6 +446,7 @@ label_zoom.pack(side='left', anchor='n', padx=2, pady=0, fill='both')
 
 # ↓ Center window horizontally, +100 vertically
 sortir.update()
+sortir.minsize(frame_control.winfo_width(), 128)
 sortir.geometry(f'+{(sortir.winfo_screenwidth() - sortir.winfo_width()) // 2}+100')
 
 sortir.mainloop()
