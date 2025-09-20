@@ -68,7 +68,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.21.19.19'
+__version__ = '3.21.21.21'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -93,6 +93,19 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         ║ src functions ║
         ╚═══════════════╝ """
 
+    def pixel(x: int | float, y: int | float) -> list[int | float]:
+        """Getting whole pixel from image list, force repeat edge instead of out of range.
+        Returns list[channel,] for pixel x, y.
+
+        **WARNING:** Coordinate system mirrored against Y!"""
+
+        cx = min((X - 1), max(0, int(x)))
+        cy = min((Y - 1), max(0, int(Y - 1 - y)))
+
+        pixelvalue = image3d[cy][cx]
+
+        return pixelvalue
+
     def src(x: int | float, y: int | float, z: int) -> int | float:
         """Analog of src from FilterMeister, force repeat edge instead of out of range.
         Returns channel z value for pixel x, y.
@@ -114,9 +127,11 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         elif Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
             yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
         elif Z == 3:  # RGB
-            yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
+            r, g, b = pixel(x, y)
+            yntensity = 0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b
         elif Z == 4:  # RGBA, multiply calculated L by A.
-            yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
+            r, g, b, a = pixel(x, y)
+            yntensity = (0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b) * a / maxcolors
 
         return yntensity / float(maxcolors)
 
@@ -183,10 +198,16 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     for y in range(Y - 1):
         for x in range(X - 1):
-            v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
-            v2 = src_lum(x + 1, y)
-            v3 = src_lum(x + 1, y + 1)
-            v4 = src_lum(x, y + 1)
+            if x == 0:
+                v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
+                v2 = src_lum(x + 1, y)
+                v3 = src_lum(x + 1, y + 1)
+                v4 = src_lum(x, y + 1)
+            else:
+                v1 = v2
+                v4 = v3
+                v2 = src_lum(x + 1, y)
+                v3 = src_lum(x + 1, y + 1)
 
             # ↓ Switch between geometry №1 and №3.
             #   Threshold set ad hoc and is subject to change
@@ -206,7 +227,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # ↓ Finally going to build a pyramid!
             #   Triangles are described counterclockwise.
 
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 1-2-0
                 thething_top.extend(
                     [
@@ -231,7 +252,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         '  endfacet\n',
                     ]
                 )
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 2-3-0
                 thething_top.extend(
                     [
@@ -256,7 +277,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         '  endfacet\n',
                     ]
                 )
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 3-4-0
                 thething_top.extend(
                     [
@@ -280,7 +301,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         '  endfacet\n',
                     ]
                 )
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):  # Ignoring completely 0 blocks to clip background
+            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 4-1-0
                 thething_top.extend(
                     [
@@ -420,14 +441,25 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     )
             # ↑ close side ends
 
-# ↓ Combining all lists to file
+    # ↓ Combining all lists to file
+    #   Joining to str gives ca. 3x writing speed vs. writelines,
+    #   but too big a str will take much memory, therefore
+    #   writing is implemented by chunks, taking into account that
+    #   one facet takes 7 lines.
+    chunk_size = 700
     with open(resultfilename, 'w') as resultfile:
         resultfile.write('solid pryanik_nepechatnyj\n')  # STL file header
-        resultfile.writelines(thething_top)
-        resultfile.writelines(thething_sides)
-        resultfile.writelines(thething_bottom)
-        resultfile.write('endsolid pryanik_nepechatnyj')  # STL file closing
 
+        for i in range(0, len(thething_top), chunk_size):
+            resultfile.write(''.join(thething_top[i : i + chunk_size]))
+
+        for i in range(0, len(thething_sides), chunk_size):
+            resultfile.write(''.join(thething_sides[i : i + chunk_size]))
+
+        for i in range(0, len(thething_bottom), chunk_size):
+            resultfile.write(''.join(thething_bottom[i : i + chunk_size]))
+
+        resultfile.write('endsolid pryanik_nepechatnyj')  # STL file closing
     return None
 # ↑ list2stl finished
 

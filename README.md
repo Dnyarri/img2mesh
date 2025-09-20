@@ -52,6 +52,11 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 Programs distribution is rather self-contained and is supposed to run right out of the box assuming standard CPython is installed on your system. Program is equipped with minimal GUI, so all you have to do after starting a program is open image file using double-click into dialog or Ctrl+O keys, or bring to life main "File" menu with right-click or Alt+F, then use "Export..." to name 3D file to be created, then wait while program does the job, then open resulting file with suitable 3D software and render the scene.
 
+> [!NOTE]
+> Since img2mesh 3.21.21.21 mesh geometry changed from *ver. 3* to *3+*, which is a hybrid of two approaches - *ver. 3* gives better results for most areas, while newly added *+* works better on sharp diagonal transitions.
+
+Geometry variants switch depending on local contrast, and threshold control is added to GUI. Default threshold setting is based on some experiments but still may need several retries on some objects. But we keep our experiments going; our main goal surely is public heath (c) Dr. Zhbach.
+
 ### For developers
 
 Export module, containing 3D-export functions, may be copied and used by other developers at will.
