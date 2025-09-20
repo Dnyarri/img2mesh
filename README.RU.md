@@ -4,7 +4,7 @@
 
 # Конвертер из растровых картинок в 3D-сетку треугольников  
 
-Программа на Python для трассировки карты высот в графических форматах [PNG](http://www.libpng.org/pub/png/) или [PGM/PPM](https://dnyarri.github.io/pypnm.html) в трёхмерную векторную сетку треугольников (triangle mesh) в форматах [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF, а также STL для 3D-принтеров. Координаты x, y пикселя соответствуют координатам x, y узлов сетки, яркость пикселя соответствует высоте (z) узла сетки. В случае исходных графических файлов с низким разрешением полученная при трассировке 3D-сетка обеспечивает лучшее визуальное качество рендеринга, нежели исходные графические файлы при их использовании в качестве heightfield напрямую.  
+Программа на Python для трассировки карты высот в графических форматах [PNG](http://www.libpng.org/pub/png/) или [PGM/PPM](https://dnyarri.github.io/pypnm.html) в трёхмерную векторную сетку треугольников (triangle mesh) в форматах [POV-Ray](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF, а также STL для 3D-принтеров. Координаты x, y пикселя соответствуют координатам x, y узлов сетки, яркость пикселя соответствует высоте (z) узла сетки. В случае исходных графических файлов с низким разрешением полученная при трассировке 3D-сетка обеспечивает лучшее визуальное качество рендеринга, нежели исходные графические файлы при их использовании в качестве heightfield напрямую.  
 
 [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html)
 
@@ -20,7 +20,7 @@
 
 - **list2mesh** module, including:
 
-  - **list2pov**: конвертер изображений в сцену POVRay. Полученная сцена содержит 3D-сетку, объект box (CSG intersection), создающий боковые стенки и дно, свет и камеру. Текстуры заявлены в declare отдельно для удобства редактирования;
+  - **list2pov**: конвертер изображений в сцену POV-Ray. Полученная сцена содержит 3D-сетку, объект box (CSG intersection), создающий боковые стенки и дно, свет и камеру. Текстуры заявлены в declare отдельно для удобства редактирования;
 
   - **list2stl**: конвертер изображений в STL. Экспортированный файл содержит 3D-сетку и боковые и нижнюю поверхности в виде сетки, поскольку они необходимы 3D-принтеру;
 
@@ -52,7 +52,7 @@
 
 ## Литература
 
-1. [POV-Ray](https://www.povray.org/) и POV SDL.
+1. [POV-Ray](https://www.povray.org/) и [спецификция POV SDL](https://www.povray.org/documentation/3.7.0/).
 
 2. [Wavefront Object Files (.obj)](https://paulbourke.net/dataformats/obj/obj_spec.pdf) в [Paul Bourke collection](https://paulbourke.net/dataformats/).
 
@@ -64,7 +64,7 @@
 
 ### Родственное
 
-[Dnyarri website](https://dnyarri.github.io) - остальной товар от Жабы Огромной Умственной Силы.
+[Dnyarri website](https://dnyarri.github.io) - остальной питонистый навар, отставить, товар от Жабы Огромной Умственной Силы.
 
 [img2mesh с иллюстрациями и объяснениями](https://dnyarri.github.io/img2mesh.html).
 

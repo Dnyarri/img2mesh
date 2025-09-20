@@ -2,11 +2,14 @@
 | 【EN】 | [〖RU〗](README.RU.md) |
 | ---- | ---- |
 
-# Bitmap to POVRay 3D triangle mesh converter
+# Bitmap to POV-Ray 3D triangle mesh converter
 
-Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) to 3D triangle mesh in [POVRay](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
+Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) to 3D triangle mesh in [POV-Ray](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
 
-[![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html)
+| Fig. 1. *Example of img2mesh output rendering* |
+| :---: |
+| [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html) |
+| *Example of rendering obtained from black and white drawing (made in Inkscape from text and circle, with a bit of Gaussian Blur added in GIMP) after conversion to 3D mesh with img2mesh and changing texture from default to metallic in POV-Ray.* |
 
 ## Format compatibility
 
@@ -30,7 +33,10 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 - **pypng** and **pypnm** modules contain components providing PNG and PPM image files reading as nested 3D lists.
 
-[![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png "Preview of img2mesh output files in one folder")](https://dnyarri.github.io/img2mesh.html)
+| Fig. 2. *Preview of img2mesh output files* |
+| :---: |
+| [![Preview of img2mesh output files in one folder](https://dnyarri.github.io/imgmesh/printscreen.png "Preview of img2mesh output files in one folder")](https://dnyarri.github.io/img2mesh.html) |
+| *Simple example of img2mesh output in different formats: a screenshot of Windows Explorer showing thumbnails for misc. files created by img2mesh from one input "in.png" map.* |
 
 ## Prerequisite and Dependencies
 
@@ -52,7 +58,7 @@ Export module, containing 3D-export functions, may be copied and used by other d
 
 ## References
 
-1. [POV-Ray](https://www.povray.org/) and POV SDL specifications.
+1. [POV-Ray](https://www.povray.org/) and [POV SDL specifications](https://www.povray.org/documentation/3.7.0/).
 
 2. [Wavefront Object Files (.obj)](https://paulbourke.net/dataformats/obj/obj_spec.pdf) specs from [Paul Bourke collection](https://paulbourke.net/dataformats/).
 
