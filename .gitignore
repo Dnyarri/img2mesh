@@ -4,4 +4,5 @@ temp/
 *.json
 *.txt
 old/
-development/
+devel*
+build*
