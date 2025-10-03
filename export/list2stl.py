@@ -59,8 +59,8 @@ Threshold set ad hoc and needs more experiments.
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
 Git repositories:
-`Main at Github <https://github.com/Dnyarri/img2mesh>`_;
-`Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
+`Main at Github<https://github.com/Dnyarri/img2mesh>`_;
+`Gitflic mirror<https://gitflic.ru/project/dnyarri/img2mesh>`_
 
 """
 
@@ -68,7 +68,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.21.21.21'
+__version__ = '3.22.3.7'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -192,22 +192,25 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         │ Mesh. STL header will be added during file writing │
         └────────────────────────────────────────────────────┘ """
 
-    thething_top = []  # Top part of the object, i.e. height field.
-    thething_sides = []  # All four sides of the object.
-    thething_bottom = []  # Bottom of the object.
+    tops = []  # Top part of the object, i.e. height field.
+    sides = []  # All four sides of the object.
+    bottoms = []  # Bottom of the object.
+
+    v1 = v2 = v3 = v4 = 0.0
+    # ↑ Not needed for Python but Ruff gets mad about "Undefined name" without it.
 
     for y in range(Y - 1):
         for x in range(X - 1):
-            if x == 0:
-                v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
-                v2 = src_lum(x + 1, y)
-                v3 = src_lum(x + 1, y + 1)
-                v4 = src_lum(x, y + 1)
-            else:
+            if x > 0:
                 v1 = v2
                 v4 = v3
                 v2 = src_lum(x + 1, y)
                 v3 = src_lum(x + 1, y + 1)
+            else:
+                v1 = src_lum(x, y)
+                v2 = src_lum(x + 1, y)
+                v3 = src_lum(x + 1, y + 1)
+                v4 = src_lum(x, y + 1)
 
             # ↓ Switch between geometry №1 and №3.
             #   Threshold set ad hoc and is subject to change
@@ -229,7 +232,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
             if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 1-2-0
-                thething_top.extend(
+                tops.extend(
                     [
                         f'  facet normal {normal(x_out(x, 0), y_out(y, 0), v1, x_out(x, 1), y_out(y, 0), v2, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
                         '    outer loop\n',
@@ -241,7 +244,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     ]
                 )
                 # ↓ bottom part 2-1-0
-                thething_bottom.extend(
+                bottoms.extend(
                     [
                         '  facet normal 0 0 -1\n',
                         '    outer loop\n',
@@ -254,7 +257,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 )
             if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 2-3-0
-                thething_top.extend(
+                tops.extend(
                     [
                         f'  facet normal {normal(x_out(x, 1), y_out(y, 0), v2, x_out(x, 1), y_out(y, 1), v3, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
                         '    outer loop\n',
@@ -266,7 +269,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     ]
                 )
                 # ↓ bottom part 3-2-0
-                thething_bottom.extend(
+                bottoms.extend(
                     [
                         '  facet normal 0 0 -1\n',
                         '    outer loop\n',
@@ -279,7 +282,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 )
             if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 3-4-0
-                thething_top.extend(
+                tops.extend(
                     [
                         f'  facet normal {normal(x_out(x, 1), y_out(y, 1), v3, x_out(x, 0), y_out(y, 1), v4, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
                         '    outer loop\n',
@@ -290,7 +293,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     ]
                 )
                 # ↓ bottom part 4-3-0
-                thething_bottom.extend(
+                bottoms.extend(
                     [
                         '  facet normal 0 0 -1\n',
                         '    outer loop\n',
@@ -303,7 +306,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 )
             if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
                 # ↓ top part 4-1-0
-                thething_top.extend(
+                tops.extend(
                     [
                         '  endfacet\n',
                         f'  facet normal {normal(x_out(x, 0), y_out(y, 1), v4, x_out(x, 0), y_out(y, 0), v1, x_out(x, 0.5), y_out(y, 0.5), v0)}\n',
@@ -316,7 +319,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     ]
                 )
                 # ↓ bottom part 1-4-0
-                thething_bottom.extend(
+                bottoms.extend(
                     [
                         '  facet normal 0 0 -1\n',
                         '    outer loop\n',
@@ -332,7 +335,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # ↓ left side begins
             if x == 0:
                 if v1 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal -1 0 0\n',
                             '    outer loop\n',  # 1 - down 1b - 4b
@@ -344,7 +347,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         ]
                     )
                 if v4 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal -1 0 0\n',
                             '    outer loop\n',  # 4b - up 4 - 1
@@ -360,7 +363,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # ↓ right side begins
             if x == (X - 2):
                 if v3 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal 1 0 0\n',
                             '    outer loop\n',  # 3 - down 3b - 2b
@@ -372,7 +375,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         ]
                     )
                 if v2 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal 1 0 0\n',
                             '    outer loop\n',  # 2b - up 2 - 3
@@ -388,7 +391,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # ↓ far side begins
             if y == 0:
                 if v2 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal 0 -1 0\n',
                             '    outer loop\n',  # 2 - down 2b - 1b
@@ -400,7 +403,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         ]
                     )
                 if v1 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal 0 -1 0\n',
                             '    outer loop\n',  # 1b - 1 - 2
@@ -416,7 +419,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # ↓ close side begins
             if y == (Y - 2):
                 if v4 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal 0 1 0\n',
                             '    outer loop\n',  # 4 - down 4b - 3b
@@ -428,7 +431,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         ]
                     )
                 if v3 > (0.5 / maxcolors):  # Blocking confluent triangles where two points match
-                    thething_sides.extend(
+                    sides.extend(
                         [
                             '  facet normal 0 1 0\n',
                             '    outer loop\n',  # 3b - up 3 - 4
@@ -445,24 +448,23 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     #   Joining to str gives ca. 3x writing speed vs. writelines,
     #   but too big a str will take much memory, therefore
     #   writing is implemented by chunks, taking into account that
-    #   one facet takes 7 lines.
+    #   one facet takes 7 lines. On my system speedup effect kicks in
+    #   at chunk_size = 280 and stabilize at chunk_size = 560.
+    #   chunk_size = 700 equals to 25 pyramids.
     chunk_size = 700
     with open(resultfilename, 'w') as resultfile:
         resultfile.write('solid pryanik_nepechatnyj\n')  # STL file header
-
-        for i in range(0, len(thething_top), chunk_size):
-            resultfile.write(''.join(thething_top[i : i + chunk_size]))
-
-        for i in range(0, len(thething_sides), chunk_size):
-            resultfile.write(''.join(thething_sides[i : i + chunk_size]))
-
-        for i in range(0, len(thething_bottom), chunk_size):
-            resultfile.write(''.join(thething_bottom[i : i + chunk_size]))
-
+        for i in range(0, len(bottoms), chunk_size):
+            resultfile.write(''.join(bottoms[i : i + chunk_size]))
+        for i in range(0, len(sides), chunk_size):
+            resultfile.write(''.join(sides[i : i + chunk_size]))
+        for i in range(0, len(tops), chunk_size):
+            resultfile.write(''.join(tops[i : i + chunk_size]))
         resultfile.write('endsolid pryanik_nepechatnyj')  # STL file closing
+
     return None
 # ↑ list2stl finished
 
-# ↓ Procedure end, main body begins
+# ↓ Dummy stub for standalone execution attempt
 if __name__ == '__main__':
-    print('Module to be imported, not run as standalone')
+    print('Module to be imported, not run as standalone.')
