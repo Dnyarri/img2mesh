@@ -18,6 +18,8 @@ History
 
 3.16.20.20  New minimalistic menu-based GUI.
 
+3.23.4.23   Validation added to GUI input, inevitably added due to Geometry №3+ addition.
+
 ----
 Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
 
@@ -30,7 +32,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.22.3.7'
+__version__ = '3.23.4.23'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -323,6 +325,21 @@ def zoomWheel(event) -> None:
         zoomIn()
 
 
+def valiDig(new_value):
+    """Tries to validate float input."""
+
+    if new_value.strip() == '':
+        return True
+    try:
+        _ = float(new_value)
+        if _ >= 0 and _ <= 1.0:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
+
+
 """ ╔═══════════╗
     ║ Main body ║
     ╚═══════════╝ """
@@ -342,6 +359,9 @@ if icon_path.exists():
     sortir.iconbitmap(icon_path)
 else:
     sortir.iconphoto(True, PhotoImage(data=b'P6\n2 2\n255\n\xff\x00\x00\xff\xff\x00\x00\x00\xff\x00\xff\x00'))
+
+# ↓ Spinbox manual input validation.
+validate_entry = sortir.register(valiDig)
 
 # ↓ Info statuses dictionaries
 info_normal = {
@@ -408,7 +428,7 @@ info01 = Label(frame_control, text='Threshold:', font=(butt['font'][0], butt['fo
 info01.pack(side='left', padx=(24, 2))
 
 geometry_threshold = DoubleVar(value=0.05)
-spin01 = Spinbox(frame_control, from_=0, to=1.0, increment=0.01, textvariable=geometry_threshold, state='disabled', width=5, font=butt['font'])
+spin01 = Spinbox(frame_control, from_=0, to=1.0, increment=0.01, textvariable=geometry_threshold, state='disabled', width=5, font=butt['font'], validate='key', validatecommand=(validate_entry, '%P'))
 spin01.pack(side='right', fill='y')
 
 sortir.bind('<Button-3>', ShowMenu)
