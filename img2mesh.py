@@ -121,11 +121,11 @@ def GetSource(event=None) -> None:
         │  They are used during export!          │
         └────────────────────────────────────────┘ """
 
-    if Path(sourcefilename).suffix == '.png':
+    if Path(sourcefilename).suffix.lower() == '.png':
         # ↓ Reading image as list
         X, Y, Z, maxcolors, image3D, info = png2list(sourcefilename)
 
-    elif Path(sourcefilename).suffix in ('.ppm', '.pgm', '.pbm', '.pnm'):
+    elif Path(sourcefilename).suffix.lower() in ('.ppm', '.pgm', '.pbm', '.pnm'):
         # ↓ Reading image as list
         X, Y, Z, maxcolors, image3D = pnm2list(sourcefilename)
 
