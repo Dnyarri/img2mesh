@@ -1,10 +1,10 @@
 
-| 【EN】 | [〖RU〗](README.RU.md) |
+| 【EN】 | [〖RU〗](README.RU.md "img2mesh разъяснена по-русски") |
 | ---- | ---- |
 
 # Bitmap to POV-Ray 3D triangle mesh converter
 
-Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) to 3D triangle mesh in [POV-Ray](https://www.povray.org/) POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
+Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) to 3D triangle mesh in [POV-Ray](https://www.povray.org/ "Persistence of Vision Raytracer") POV, Wavefront OBJ, Autodesk DXF and stereolithography (3D printer) STL format. Resulting triangle mesh provides better rendering in case of low-res source files as compared to using source bitmaps as a heightfield directly.  
 
 | Fig. 1. *Example of img2mesh output rendering* |
 | :---: |
@@ -40,13 +40,13 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 ## Prerequisite and Dependencies
 
-1. [Python](https://www.python.org/) 3.11 or above.
-2. [PyPNG](https://gitlab.com/drj11/pypng). Copy included into current img2mesh distribution.
-3. [PyPNM](https://pypi.org/project/PyPNM/). Copy included into current img2mesh distribution.
+1. [Python](https://www.python.org/ "CPython") 3.11 or above.
+2. [PyPNG](https://gitlab.com/drj11/pypng "Pure Python PNG format module"). Copy included into current img2mesh distribution.
+3. [PyPNM](https://pypi.org/project/PyPNM/ "Pure Python PPM and PGM format module"). Copy included into current img2mesh distribution.
 4. Tkinter. Normally included into standard CPython distribution.
 
 > [!NOTE]
-> Since img2mesh 3.21.2.16 PyPNM version included into distribution updated to [PyPNM "Victory 2" main](https://github.com/Dnyarri/PyPNM), intended to be used with Python 3.11 and above. The only actual limitation is that main version does not have a workaround for displaying 16 bpc images necessary for old Tkinter included into old CPython distributions. If you want bringing old Tkinter compatibility back, download [PyPNM extended compatibility version](https://github.com/Dnyarri/PyPNM/tree/py34) and plug it in manually.
+> Since img2mesh 3.21.2.16 PyPNM version included into distribution updated to [PyPNM "Victory 2" main](https://github.com/Dnyarri/PyPNM "Pure Python PPM and PGM format module"), intended to be used with Python 3.11 and above. The only actual limitation is that main version does not have a workaround for displaying 16 bpc images necessary for old Tkinter included into old CPython distributions. If you want bringing old Tkinter compatibility back, download [PyPNM extended compatibility version](https://github.com/Dnyarri/PyPNM/tree/py34 "Pure Python PPM and PGM format module for Python 3.4") and plug it in to downgrade img2mesh manually.
 
 ## Installation and Usage
 
@@ -63,22 +63,22 @@ Export module, containing 3D-export functions, may be copied and used by other d
 
 ## References
 
-1. [POV-Ray](https://www.povray.org/) and [POV SDL specifications](https://www.povray.org/documentation/3.7.0/).
+1. [POV-Ray](https://www.povray.org/ "Persistence of Vision Raytracer") and [POV SDL specifications](https://www.povray.org/documentation/3.7.0/ "POV format specifications").
 
-2. [Wavefront Object Files (.obj)](https://paulbourke.net/dataformats/obj/obj_spec.pdf) specs from [Paul Bourke collection](https://paulbourke.net/dataformats/).
+2. [Wavefront Object Files (.obj)](https://paulbourke.net/dataformats/obj/obj_spec.pdf "OBJ format specifications") specs from [Paul Bourke collection](https://paulbourke.net/dataformats/).
 
-3. [Cătălin IANCU et al., From CAD model to 3D print via “STL” file format](https://www.utgjiu.ro/rev_mec/mecanica/pdf/2010-01/13_Catalin%20Iancu.pdf).
+3. [Cătălin IANCU et al., From CAD model to 3D print via “STL” file format](https://www.utgjiu.ro/rev_mec/mecanica/pdf/2010-01/13_Catalin%20Iancu.pdf "STL format specifications").
 
-4. [Marshall Burns, Automated Fabrication, Section 6.5](https://www.fabbers.com/tech/STL_Format).
+4. [Marshall Burns, Automated Fabrication, Section 6.5](https://www.fabbers.com/tech/STL_Format "STL format specifications").
 
-5. [DXF Reference](https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf) by Autodesk, Inc.
+5. [DXF Reference](https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf "DXF format specifications") by Autodesk, Inc.
 
 ### Related
 
-[Dnyarri website - more Python freeware](https://dnyarri.github.io) by the same author.
+[Dnyarri website - more Python freeware](https://dnyarri.github.io "The Toad's Slimy Mudhole - Python freeware for POV-Ray,  Scale2x, Scale3x, Scale2xSFX and Scale3xSFX, PyPNM and other image editing accessories") by the same author.
 
-[img2mesh page with illustrations](https://dnyarri.github.io/img2mesh.html), explanations etc.
+[img2mesh page with illustrations](https://dnyarri.github.io/img2mesh.html "img2mesh page with illustrated explanations and explained illustrations"), explanations etc.
 
-[img2mesh source at github](https://github.com/Dnyarri/img2mesh)
+[img2mesh source and binaries at Github](https://github.com/Dnyarri/img2mesh "img2mesh source at Github")
 
-[img2mesh source at gitflic mirror](https://gitflic.ru/project/dnyarri/img2mesh)
+[img2mesh source at Gitflic mirror](https://gitflic.ru/project/dnyarri/img2mesh "img2mesh source at Gitflic mirror")

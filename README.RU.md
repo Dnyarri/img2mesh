@@ -73,6 +73,6 @@
 
 [img2mesh с иллюстрациями и объяснениями](https://dnyarri.github.io/img2mesh.html).
 
-[img2mesh source at github](https://github.com/Dnyarri/img2mesh)
+[Исходники img2mesh на Github](https://github.com/Dnyarri/img2mesh)
 
-[img2mesh source at gitflic mirror](https://gitflic.ru/project/dnyarri/img2mesh)
+[Зеркало исходников img2mesh на Gitflic](https://gitflic.ru/project/dnyarri/img2mesh)
