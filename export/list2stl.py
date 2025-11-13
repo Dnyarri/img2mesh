@@ -1,74 +1,86 @@
 #!/usr/bin/env python3
 
 """
-IMG2STL - Conversion of image heightfield to triangle mesh in stereolithography STL format
--------------------------------------------------------------------------------------------
+========
+list2stl
+========
+--------------------------------------------------------------------------------
+Conversion of image heightfield to triangle mesh in stereolithography STL format
+--------------------------------------------------------------------------------
 
-Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
+Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_
+aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
 
 Overview
----------
+--------
 
-list2stl present function for converting image-like nested X,Y,Z int lists to
-3D triangle mesh height field in stereolithography STL format.
+**list2stl** export module present function for converting images
+and image-like nested lists to 3D triangle mesh height field,
+and saving mesh thus obtained in stereolithography `STL`_ format.
 
 Usage
-------
+-----
 
-    `list2stl.list2stl(image3d, maxcolors, result_file_name)`
+::
+
+    list2stl.list2stl(image3d, maxcolors, result_file_name)
 
 where:
 
-    `image3d` - image as list of lists of lists of int channel values;
-
-    `maxcolors` - maximum value of int in `image3d` list;
-
-    `result_file_name` - name of STL file to export.
+:image3d: image as list of lists of lists of int channel values;
+:maxcolors: maximum of channel value in ``image3d`` list (int),
+    255 for 8 bit and 65535 for 16 bit input;
+:result_file_name: name of POV-Ray file to export.
 
 References
------------
+----------
 
-1. `Cătălin IANCU et al., From CAD model to 3D print via “STL” file format<https://www.utgjiu.ro/rev_mec/mecanica/pdf/2010-01/13_Catalin%20Iancu.pdf>`_.
+1. `Cătălin IANCU et al.`_, From CAD model to 3D print via “STL” file format.
 
-2. `Marshall Burns, Automated Fabrication, Section 6.5<https://www.fabbers.com/tech/STL_Format>`_.
+2. `Marshall Burns, Automated Fabrication, Section 6.5`_.
 
-History
---------
+3. `STL`_ (STereoLithography) File Format, ASCII. Sustainability of Digital Formats: Planning for Library of Congress Collections.
 
-1.0.0.0     Initial production release.
+.. _Cătălin IANCU et al.: https://www.utgjiu.ro/rev_mec/mecanica/pdf/2010-01/13_Catalin%20Iancu.pdf
 
-1.9.1.0     Multiple changes.
-Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+.. _Marshall Burns, Automated Fabrication, Section 6.5: https://www.fabbers.com/tech/STL_Format
 
-1.13.4.0    Rewritten from standalone img2stl to module list2stl.
-
-3.14.16.1   Mesh geometry completely changed to ver. 3.
-
-3.18.22.2   Normals improved. Fixed confluent triangles along sides.
-
-3.19.8.1    Clipping zero or transparent pixels.
-
-3.20.1.9    Since pyramid top is exactly in the middle,
-interpolation replaced with average to speed things up.
-
-3.21.19.19  New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
-depending on neighbour differences threshold.
-Threshold set ad hoc and needs more experiments.
+.. _STL: https://www.loc.gov/preservation/digital/formats/fdd/fdd000506.shtml
 
 -------------------
-Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
+Main site: `The Toad's Slimy Mudhole`_
 
-Git repositories:
-`Main at Github<https://github.com/Dnyarri/img2mesh>`_;
-`Gitflic mirror<https://gitflic.ru/project/dnyarri/img2mesh>`_
+.. _The Toad's Slimy Mudhole: https://dnyarri.github.io
+
+img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
+
+.. _img2mesh@Github: https://github.com/Dnyarri/img2mesh
+
+.. _img2mesh@Gitflic: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
+
+# History
+# -------
+# 1.0.0.0   Initial production release.
+# 1.9.1.0   Multiple changes.
+#   Versioning changed to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+# 1.13.4.0  Rewritten from standalone img2stl to module list2stl.
+# 3.14.16.1 Mesh geometry completely changed to ver. 3.
+# 3.18.22.2 Normals improved. Fixed confluent triangles along sides.
+# 3.19.8.1  Clipping zero or transparent pixels.
+# 3.20.1.9  Since pyramid top is exactly in the middle,
+#   interpolation replaced with average to speed things up.
+# 3.21.19.19    New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
+#   depending on neighbour differences threshold.
+#   Threshold set ad hoc and needs more experiments.
+# 3.23.13.13    All docstrings go to ReST.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.22.3.7'
+__version__ = '3.23.13.13'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -79,9 +91,9 @@ from math import sqrt
 def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
     """Converting nested 3D list to STL heightfield triangle mesh.
 
-    - `image3d` - image as list of lists of lists of int channel values;
-    - `maxcolors` - maximum value of int in `image3d` list;
-    - `resultfilename` - name of STL file to export.
+    :image3d: image as list of lists of lists of int channel values;
+    :maxcolors: maximum value of int in ``image3d`` list;
+    :resultfilename: name of STL file to export.
 
     """
 
@@ -463,6 +475,8 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         resultfile.write('endsolid pryanik_nepechatnyj')  # STL file closing
 
     return None
+
+
 # ↑ list2stl finished
 
 # ↓ Dummy stub for standalone execution attempt

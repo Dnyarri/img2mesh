@@ -1,73 +1,80 @@
 #!/usr/bin/env python3
 
 """
-IMG2DXF - Conversion of image heightfield to triangle mesh in Autodesk DXF format
------------------------------------------------------------------------------------
+========
+list2dxf
+========
+-----------------------------------------------------------------------
+Conversion of image heightfield to triangle mesh in Autodesk DXF format
+-----------------------------------------------------------------------
 
-Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
+Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_
+aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
 
 Overview
----------
+--------
 
-list2dxf present function for converting image-like nested X,Y,Z int lists to
-3D triangle mesh height field in Autodesk DXF format.
+**list2dxf** export module present function for converting images
+and image-like nested lists to 3D triangle mesh height field,
+and saving mesh thus obtained in Autodesk ASCII DXF format
+according to `AutoCAD 2012 DXF Reference`_.
 
 Usage
-------
+-----
 
-    `list2dxf.list2dxf(image3d, maxcolors, result_file_name)`
+::
+
+    list2dxf.list2dxf(image3d, maxcolors, result_file_name)
 
 where:
 
-    `image3d` - image as list of lists of lists of int channel values;
-
-    `maxcolors` - maximum value of int in `image3d` list;
-
-    `result_file_name` - name of DXF file to export.
+:image3d: image as list of lists of lists of int channel values;
+:maxcolors: maximum of channel value in ``image3d`` list (int),
+    255 for 8 bit and 65535 for 16 bit input;
+:result_file_name: name of POV-Ray file to export.
 
 Reference
-----------
+---------
 
-`AutoCAD 2012 DXF Reference, p. 64<https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf>`_.
+Autodesk `AutoCAD 2012 DXF Reference`_, p. 64.
 
-History
---------
-
-0.0.0.1     Development started 23 Aug 2024.
-
-1.9.1.0     First production release.
-Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
-
-1.13.4.0    Rewritten from standalone img2dxf to module list2dxf.
-
-3.14.16.1   Mesh geometry completely changed to ver. 3.
-
-3.19.8.1    Clipping zero or transparent pixels.
-
-3.20.1.9    Since pyramid top is exactly in the middle,
-interpolation replaced with average to speed things up.
-
-3.21.19.19  New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
-depending on neighbour differences threshold.
-Threshold set ad hoc and needs more experiments.
-
-3.22.3.7    Writing main object changed from .writelines to
-per pyramid write(''.join(list)), ca. 19% speedup.
+.. _AutoCAD 2012 DXF Reference: https://images.autodesk.com/adsk/files/autocad_2012_pdf_dxf-reference_enu.pdf
 
 -------------------
-Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
+Main site: `The Toad's Slimy Mudhole`_
 
-Git repositories:
-`Main at Github<https://github.com/Dnyarri/img2mesh>`_;
-`Gitflic mirror<https://gitflic.ru/project/dnyarri/img2mesh>`_
+.. _The Toad's Slimy Mudhole: https://dnyarri.github.io
+
+img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
+
+.. _img2mesh@Github: https://github.com/Dnyarri/img2mesh
+
+.. _img2mesh@Gitflic: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
+
+# History
+# -------
+# 0.0.0.1   Development started 23 Aug 2024.
+# 1.9.1.0   First production release.
+#   Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+# 1.13.4.0  Rewritten from standalone img2dxf to module list2dxf.
+# 3.14.16.1 Mesh geometry completely changed to ver. 3.
+# 3.19.8.1  Clipping zero or transparent pixels.
+# 3.20.1.9  Since pyramid top is exactly in the middle,
+#   interpolation replaced with average to speed things up.
+# 3.21.19.19    New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
+#   depending on neighbour differences threshold.
+#   Threshold set ad hoc and needs more experiments.
+# 3.22.3.7  Writing main object changed from .writelines to
+#   per pyramid write(''.join(list)), ca. 19% speedup.
+# 3.23.13.13    All docstrings go to ReST.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.22.3.7'
+__version__ = '3.23.13.13'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -78,9 +85,9 @@ from time import strftime
 def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
     """Converting nested 3D list to Autodesk DXF heightfield triangle mesh.
 
-    - `image3d` - image as list of lists of lists of int channel values;
-    - `maxcolors` - maximum value of int in `image3d` list;
-    - `resultfilename` - name of DXF file to export.
+    :image3d: image as list of lists of lists of int channel values;
+    :maxcolors: maximum value of int in ``image3d`` list;
+    :resultfilename: name of DXF file to export.
 
     """
 
@@ -277,6 +284,8 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     resultfile.close()
 
     return None
+
+
 # ↑ list2dxf finished
 
 # ↓ Dummy stub for standalone execution attempt

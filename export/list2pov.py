@@ -1,80 +1,87 @@
 #!/usr/bin/env python3
 
 """
-IMG2POV - Conversion of image heightfield to triangle mesh in POV-Ray format
------------------------------------------------------------------------------
+========
+list2pov
+========
+------------------------------------------------------------------
+Conversion of image heightfield to triangle mesh in POV-Ray format
+------------------------------------------------------------------
 
-Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_ aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
+Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_
+aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
 
 Overview
----------
+--------
 
-`list2pov` present function for converting image-like nested X,Y,Z int lists to
-3D triangle mesh height field in POV-Ray format.
+**list2pov** export module present function for converting images
+and image-like nested lists to 3D triangle mesh height field,
+and saving mesh thus obtained in `POV-Ray`_ format
+according to `Mesh`_ specification.
 
 Usage
-------
+-----
 
-    `list2pov.list2pov(image3d, maxcolors, result_file_name)`
+::
+
+    list2pov.list2pov(image3d, maxcolors, result_file_name)
 
 where:
 
-    `image3d`: image as list of lists of lists of int channel values;
-
-    `maxcolors`: maximum value of int in `image3d` list;
-
-    `result_file_name`: name of POV-Ray file to export.
+:image3d: image as list of lists of lists of int channel values;
+:maxcolors: maximum of channel value in ``image3d`` list (int),
+    255 for 8 bit and 65535 for 16 bit input;
+:result_file_name: name of POV-Ray file to export.
 
 Reference
-----------
+---------
 
-`POV-Ray Documentation, Section 2.4.2.3 Mesh<https://www.povray.org/documentation/view/3.7.1/292/>`_.
+`POV-Ray`_ Documentation, Section 2.4.2.3 `Mesh`_.
 
-History
---------
+.. _POV-Ray: https://www.povray.org/
 
-0.0.1.0     Initial standalone img2mesh version with 2x2 folding mesh, Dec 2023.
-
-0.0.2.0     Switched to 1x4 pyramid mesh, Jan 2024.
-
-0.0.7.0     Standalone img2mesh stable.
-
-2.9.1.0     Total rewrite to remove all transforms from POV-Ray.
-Internal brightness map transfer function added;
-finally it can be adjusted nondestructively within POV-Ray instead of re-editing
-in Photoshop or GIMP and re-exporting every time.
-Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
-
-2.14.14.2   LAST RELEASE OF v2.
-Rewritten from standalone img2pov to module list2pov.
-Exported file may be used both as scene and as include.
-Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.
-
-3.14.15.1   Mesh geometry completely changed to ver. 3.
-
-3.19.8.1    Clipping zero or transparent pixels.
-
-3.20.1.9    Since pyramid top is exactly in the middle,
-interpolation replaced with average to speed things up.
-
-3.21.19.19  New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
-depending on neighbour differences threshold.
-Threshold set ad hoc and needs more experiments.
+.. _Mesh: https://www.povray.org/documentation/view/3.7.1/292/
 
 -------------------
-Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
+Main site: `The Toad's Slimy Mudhole`_
 
-Git repositories:
-`Main at Github<https://github.com/Dnyarri/img2mesh>`_;
-`Gitflic mirror<https://gitflic.ru/project/dnyarri/img2mesh>`_
+.. _The Toad's Slimy Mudhole: https://dnyarri.github.io
+
+img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
+
+.. _img2mesh@Github: https://github.com/Dnyarri/img2mesh
+
+.. _img2mesh@Gitflic: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
+
+# History:
+# --------
+# 0.0.1.0   Initial standalone img2mesh version with 2x2 folding mesh, Dec 2023.
+# 0.0.2.0   Switched to 1x4 pyramid mesh, Jan 2024.
+# 0.0.7.0   Standalone img2mesh stable.
+# 2.9.1.0   Total rewrite to remove all general transforms from POV-Ray lead to
+#   rendering speed to increase more than expected.
+#   Internal brightness map transfer function added.
+#   Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+# 2.14.14.2 LAST RELEASE OF v2.
+#   Rewritten from standalone img2pov to module list2pov.
+#   Exported file may be used both as scene and as include.
+#   Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.
+# 3.14.15.1 Mesh geometry completely changed to ver. 3.
+# 3.19.8.1  Clipping zero or transparent pixels.
+# 3.20.1.9  Since pyramid top is exactly in the middle,
+# interpolation replaced with average to speed things up.
+# 3.21.19.19    New mesh geometry ver. 3+, combining ver. 3 and ver. 1,
+#   depending on neighbour differences threshold.
+#   Threshold set ad hoc and needs more experiments.
+# 3.23.13.13    All docstrings go to ReST.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.22.3.7'
+__version__ = '3.23.13.13'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -83,11 +90,11 @@ from time import strftime
 
 
 def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
-    """Convert nested 3D list of X, Y, Z coordinates to POV heightfield triangle mesh.
+    """Convert nested 3D list of X, Y, Z coordinates to POV-Ray POV heightfield triangle mesh.
 
-    - `image3d` - image as list of lists of lists of int channel values;
-    - `maxcolors` - maximum value of int in `image3d` list;
-    - `resultfilename` - name of POV file to export.
+    :image3d: image as list of lists of lists of int channel values;
+    :maxcolors: maximum value of int in ``image3d`` list;
+    :resultfilename: name of POV file to export.
 
     """
 
@@ -449,6 +456,8 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     resultfile.close()
 
     return None
+
+
 # ↑ list2pov finished
 
 # ↓ Dummy stub for standalone execution attempt

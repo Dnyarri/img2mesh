@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
 """
-IMG2MESH - Program for conversion of image heightfield to triangle 3D-mesh in different formats
-------------------------------------------------------------------------------------------------
+========
+IMG2MESH
+========
+----------------------------------------------------------------------------------
+Program for conversion of image heightfield to triangle 3D-mesh in various formats
+----------------------------------------------------------------------------------
 
 Created by:
 `Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka
 `Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
 
 History
---------
+-------
 
 2.13.13.2   Previous version of img2mesh GUI replaced with completely new joint
 (PyPNG, PyPNM) ➔ (list2pov, list2obj, list2stl, list2dxf) program with the same name.
@@ -21,10 +25,19 @@ History
 3.23.4.23   Validation added to GUI input, inevitably added due to Geometry №3+ addition.
 
 ----
-Main site: `The Toad's Slimy Mudhole <https://dnyarri.github.io>`_
+Main site: `The Toad's Slimy Mudhole`_
 
-Git repositories:
-`Main at Github <https://github.com/Dnyarri/img2mesh>`_; `Gitflic mirror <https://gitflic.ru/project/dnyarri/img2mesh>`_
+.. _The Toad's Slimy Mudhole: https://dnyarri.github.io
+
+`img2mesh`_ explanations and illustrations page.
+
+.. _img2mesh: https://dnyarri.github.io/img2mesh.html
+
+img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
+
+.. _img2mesh@Github: https://github.com/Dnyarri/img2mesh
+
+.. _img2mesh@Gitflic: https://gitflic.ru/project/dnyarri/img2mesh
 
 """
 
@@ -32,7 +45,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.23.4.23'
+__version__ = '3.23.13.13'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
