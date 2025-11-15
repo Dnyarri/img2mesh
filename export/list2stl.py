@@ -27,10 +27,12 @@ Usage
 
 where:
 
-:image3d: image as list of lists of lists of int channel values;
-:maxcolors: maximum of channel value in ``image3d`` list (int),
-    255 for 8 bit and 65535 for 16 bit input;
-:result_file_name: name of POV-Ray file to export.
+- ``image3d``: image as list of lists of lists of int channel values;
+- ``maxcolors``: maximum of channel value in ``image3d`` list (int),
+255 for 8 bit and 65535 for 16 bit input;
+- ``result_file_name``: name of POV-Ray file to export;
+- ``threshold``: local contrast threshold (maximal difference in 2x2 pixels area),
+above which geometry switch from №3 to №1.
 
 References
 ----------
@@ -91,9 +93,14 @@ from math import sqrt
 def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
     """Converting nested 3D list to STL heightfield triangle mesh.
 
-    :image3d: image as list of lists of lists of int channel values;
-    :maxcolors: maximum value of int in ``image3d`` list;
-    :resultfilename: name of STL file to export.
+        .. function:: list2pov(image3d, maxcolors, resultfilename, threshold)
+        :param image3d: image as list of lists of lists of int channel values;
+        :type image3d: list[list[list[int]]
+        :param int maxcolors: maximum of channel value in ``image3d`` list (int),
+    255 for 8 bit and 65535 for 16 bit input;
+        :param str resultfilename: name of POV file to export;
+        :param float threshold: local contrast threshold (maximal difference
+    in 2x2 pixels area), above which geometry switch from №3 to №1.
 
     """
 
