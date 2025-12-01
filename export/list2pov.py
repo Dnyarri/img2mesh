@@ -94,7 +94,6 @@ from time import strftime
 def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
     """Convert nested 3D list of X, Y, Z coordinates to POV-Ray POV heightfield triangle mesh.
 
-        .. function:: list2pov(image3d, maxcolors, resultfilename, threshold)
         :param image3d: image as list of lists of lists of int channel values;
         :type image3d: list[list[list[int]]
         :param int maxcolors: maximum of channel value in ``image3d`` list (int),
