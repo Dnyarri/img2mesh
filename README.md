@@ -75,7 +75,7 @@ Export module, containing 3D-export functions, may be copied and used by other d
 
 ### Related
 
-[Dnyarri website - more Python freeware](https://dnyarri.github.io "The Toad's Slimy Mudhole - Python freeware for POV-Ray,  Scale2x, Scale3x, Scale2xSFX and Scale3xSFX, PyPNM and other image editing accessories") by the same author.
+[Dnyarri website - more Python freeware](https://dnyarri.github.io "The Toad's Slimy Mudhole - Python freeware for POV-Ray and other 3D, Scale2x, Scale3x, Scale2xSFX, Scale2xSFX, PPM and PGM image support, bilinear and barycentric image interpolation, and batch processing") by the same author.
 
 [img2mesh page with illustrations](https://dnyarri.github.io/img2mesh.html "img2mesh page with illustrated explanations and explained illustrations"), explanations etc.
 
