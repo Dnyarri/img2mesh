@@ -4,25 +4,24 @@
 ========
 IMG2MESH
 ========
-----------------------------------------------------------------------------------
-Program for conversion of image heightfield to triangle 3D-mesh in various formats
-----------------------------------------------------------------------------------
 
-Created by:
-`Ilya Razmanov <mailto:ilyarazmanov@gmail.com>`_ aka
-`Ilyich the Toad <mailto:amphisoft@gmail.com>`_.
+Program for conversion of image heightfield
+to triangle 3D-mesh in various formats.
 
 History
 -------
 
-2.13.13.2   Previous version of img2mesh GUI replaced with completely new joint
-(PyPNG, PyPNM) ➔ (list2pov, list2obj, list2stl, list2dxf) program with the same name.
+2.13.13.2   Previous version of img2mesh GUI replaced with completely new
+joint (PyPNG, PyPNM) ➔ (list2pov, list2obj, list2stl, list2dxf)
+program with the same name.
 
 3.14.16.1   list2mesh components upgraded to version 3 with improved geometry.
 
 3.16.20.20  New minimalistic menu-based GUI.
 
-3.23.4.23   Validation added to GUI input, inevitably added due to Geometry №3+ addition.
+3.21.19.19  GUI changed to add threshold input for new Geometry №3+.
+
+3.23.4.23   Validation was inevitably added to threshold input.
 
 ----
 Main site: `The Toad's Slimy Mudhole`_
@@ -42,10 +41,10 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 """
 
 __author__ = 'Ilya Razmanov'
-__copyright__ = '(c) 2025 Ilya Razmanov'
+__copyright__ = '(c) 2025-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.23.13.13'
+__version__ = '3.26.10.10'  # 10 Feb 2026
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -56,25 +55,26 @@ from tkinter import Button, DoubleVar, Frame, Label, Menu, Menubutton, PhotoImag
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showinfo
 
-from export import list2dxf, list2obj, list2pov, list2stl
 from pypng.pnglpng import png2list
 from pypnm.pnmlpnm import list2bin, pnm2list
 
+from export import list2dxf, list2obj, list2pov, list2stl
+
 
 def DisMiss(event=None) -> None:
-    """Kill dialog and continue"""
+    """Kill dialog and continue."""
 
     sortir.destroy()
 
 
 def ShowMenu(event) -> None:
-    """Pop menu up (or sort of drop it down)"""
+    """Pop menu up (or sort of drop it down)."""
 
     menu01.post(event.x_root, event.y_root)
 
 
 def ShowInfo(event=None) -> None:
-    """Show image information"""
+    """Show image information."""
 
     file_size = Path(sourcefilename).stat().st_size
     file_size_str = f'{file_size / 1048576:.2f} Mb' if (file_size > 1048576) else f'{file_size / 1024:.2f} Kb' if (file_size > 1024) else f'{file_size} bytes'
@@ -86,7 +86,7 @@ def ShowInfo(event=None) -> None:
 
 
 def UINormal() -> None:
-    """Normal UI state, buttons enabled"""
+    """Normal UI state, buttons enabled."""
 
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
@@ -99,7 +99,7 @@ def UINormal() -> None:
 
 
 def UIBusy() -> None:
-    """Busy UI state, buttons disabled"""
+    """Busy UI state, buttons disabled."""
 
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
@@ -112,16 +112,21 @@ def UIBusy() -> None:
 
 
 def GetSource(event=None) -> None:
-    """Open source image and redefine other controls state"""
+    """Open source image and redefine other controls state."""
 
-    global zoom_factor, zoom_do, zoom_show, preview, preview_data
-    global X, Y, Z, maxcolors, image3D, sourcefilename
-    global info_normal
+    global zoom_factor, zoom_do, zoom_show, info_normal
+    global sourcefilename, X, Y, Z, maxcolors, image3D
+    global preview, preview_data
 
     zoom_factor = 0
 
-    sourcefilename = askopenfilename(title='Open image file', filetypes=[('Supported formats', '.png .ppm .pgm .pbm .pnm'), ('Portable network graphics', '.png'), ('Portable any map', '.ppm .pgm .pbm .pnm')])
+    old_sourcefilename = sourcefilename  # Temporary saving info in case of "Open.." cancel
+    sourcefilename = askopenfilename(
+        title='Open image file',
+        filetypes=[('Supported formats', '.png .ppm .pgm .pbm .pnm'), ('Portable network graphics', '.png'), ('Portable any map', '.ppm .pgm .pbm .pnm')],
+    )
     if sourcefilename == '':
+        sourcefilename = old_sourcefilename
         return
 
     info_normal = {'txt': f'{Path(sourcefilename).name}', 'fg': 'grey', 'bg': 'grey90'}
@@ -181,13 +186,19 @@ def GetSource(event=None) -> None:
     preview = zoom_do[zoom_factor]
     zanyato.config(image=preview, compound='none', background=zanyato.master['background'], relief='flat', borderwidth=1)
     zanyato.pack_configure(pady=max(0, 16 - (preview.height() // 2)))
-    # ↓ binding zoom on preview click
+
+    """ ┌────────────────────────────────────────────┐
+        │ Binding everything that needs opened image │
+        └────────────────────────────────────────────┘ """
+    # ↓ binding zoom
     zanyato.bind('<Control-Button-1>', zoomIn)  # Ctrl + left click
     zanyato.bind('<Double-Control-Button-1>', zoomIn)  # Ctrl + left click too fast
     zanyato.bind('<Alt-Button-1>', zoomOut)  # Alt + left click
     zanyato.bind('<Double-Alt-Button-1>', zoomOut)  # Alt + left click too fast
     sortir.bind_all('<MouseWheel>', zoomWheel)  # Wheel
+    # ↓ image info
     sortir.bind_all('<Control-i>', ShowInfo)
+
     # ↓ enabling zoom buttons
     butt_plus.config(state='normal', cursor='hand2')
     butt_minus.config(state='normal', cursor='hand2')
@@ -204,7 +215,7 @@ def GetSource(event=None) -> None:
 
 
 def SaveAsPOV() -> None:
-    """Once selected Export POV"""
+    """Once selected Export POV-Ray."""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -226,7 +237,7 @@ def SaveAsPOV() -> None:
 
 
 def SaveAsOBJ() -> None:
-    """Once selected Export OBJ"""
+    """Once selected Export OBJ."""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -248,7 +259,7 @@ def SaveAsOBJ() -> None:
 
 
 def SaveAsSTL() -> None:
-    """Once selected Export STL"""
+    """Once selected Export STL."""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -270,7 +281,7 @@ def SaveAsSTL() -> None:
 
 
 def SaveAsDXF() -> None:
-    """Once selected Export DXF"""
+    """Once selected Export DXF."""
 
     global sourcefilename
     savefilename = asksaveasfilename(
@@ -292,7 +303,7 @@ def SaveAsDXF() -> None:
 
 
 def zoomIn(event=None) -> None:
-    """Zoom preview in"""
+    """Zoom preview in."""
 
     global zoom_factor, preview
     zoom_factor = min(zoom_factor + 1, 4)  # max zoom 5
@@ -311,7 +322,7 @@ def zoomIn(event=None) -> None:
 
 
 def zoomOut(event=None) -> None:
-    """Zoom preview out"""
+    """Zoom preview out."""
 
     global zoom_factor, preview
     zoom_factor = max(zoom_factor - 1, -4)  # min zoom 1/5
@@ -330,19 +341,28 @@ def zoomOut(event=None) -> None:
 
 
 def zoomWheel(event) -> None:
-    """zoomIn or zoomOut by mouse wheel"""
+    """zoomIn or zoomOut by mouse wheel."""
 
-    if event.delta < 0:
-        zoomOut()
-    if event.delta > 0:
-        zoomIn()
+    if event.widget != spin01:  # Blocks spinbox from zoomWheel for incWheel
+        if event.delta < 0:
+            zoomOut()
+        if event.delta > 0:
+            zoomIn()
+
+
+def incWheel(event) -> None:
+    """Increment or decrement entry value by mouse wheel."""
+
+    if event.widget == spin01:
+        if event.delta < 0:
+            geometry_threshold.set(round(min(1.0, max(0.0, geometry_threshold.get() - 0.01)), 2))
+        if event.delta > 0:
+            geometry_threshold.set(round(min(1.0, max(0.0, geometry_threshold.get() + 0.01)), 2))
 
 
 def valiDig(new_value):
-    """Tries to validate float input."""
+    """Try to validate float input."""
 
-    if new_value.strip() == '':
-        return True
     try:
         _ = float(new_value)
         if _ >= 0 and _ <= 1.0:
@@ -356,9 +376,10 @@ def valiDig(new_value):
 """ ╔═══════════╗
     ║ Main body ║
     ╚═══════════╝ """
-
+# ↓ Initializing
+sourcefilename = ''
 zoom_factor = 0
-sourcefilename = X = Y = Z = maxcolors = None
+X = Y = Z = maxcolors = None
 
 sortir = Tk()
 
@@ -370,8 +391,8 @@ icon_path = Path(__file__).resolve().parent / 'vaba.ico'
 
 if icon_path.exists():
     sortir.iconbitmap(icon_path)
-else:
-    sortir.iconphoto(True, PhotoImage(data=b'P6\n2 2\n255\n\xff\x00\x00\xff\xff\x00\x00\x00\xff\x00\xff\x00'))
+else:  # New brighter OYMC alt icon for a new year!
+    sortir.iconphoto(True, PhotoImage(data=b'P6\n2 2\n255\n\xff\x7f\x00\xff\xff\x00\xff\x00\xff\x00\xff\xff'))
 
 # ↓ Spinbox manual input validation.
 validate_entry = sortir.register(valiDig)
@@ -394,7 +415,7 @@ butt = {
     'cursor': 'hand2',
     'border': '2',
     'relief': 'groove',
-    'overrelief': 'raised',
+    'overrelief': 'ridge',
     'foreground': 'SystemButtonText',
     'background': 'SystemButtonFace',
     'activeforeground': 'dark blue',
@@ -441,13 +462,19 @@ info01 = Label(frame_control, text='Threshold:', font=(butt['font'][0], butt['fo
 info01.pack(side='left', padx=(24, 2))
 
 geometry_threshold = DoubleVar(value=0.05)
-spin01 = Spinbox(frame_control, from_=0, to=1.0, increment=0.01, textvariable=geometry_threshold, state='disabled', width=5, font=butt['font'], validate='key', validatecommand=(validate_entry, '%P'))
+spin01 = Spinbox(
+    frame_control,
+    from_=0,
+    to=1.0,
+    increment=0.01,
+    textvariable=geometry_threshold,
+    state='disabled',
+    width=5,
+    font=butt['font'],
+    validate='key',
+    validatecommand=(validate_entry, '%P'),
+)
 spin01.pack(side='right', fill='y')
-
-sortir.bind('<Button-3>', ShowMenu)
-sortir.bind_all('<Alt-f>', ShowMenu)
-sortir.bind_all('<Control-o>', GetSource)
-sortir.bind_all('<Control-q>', DisMiss)
 
 frame_img = Frame(sortir, borderwidth=2, relief='groove')
 frame_img.pack(side='top', anchor='center', expand=True)
@@ -464,8 +491,6 @@ zanyato = Label(
     background='grey90',
     cursor='arrow',
 )
-zanyato.bind('<Double-Button-1>', GetSource)
-frame_img.bind('<Double-Button-1>', GetSource)
 zanyato.pack(side='top', padx=0, pady=0)
 
 frame_zoom = Frame(frame_img, width=300, borderwidth=2, relief='groove')
@@ -479,6 +504,27 @@ butt_minus.pack(side='right', padx=0, pady=0, fill='both')
 
 label_zoom = Label(frame_zoom, text='Zoom 1:1', font=('courier', 8), state='disabled')
 label_zoom.pack(side='left', anchor='n', padx=2, pady=0, fill='both')
+
+""" ┌────────────────────────────────────────────────────┐
+    │ Binding everything that does not need opened image │
+    └────────────────────────────────────────────────────┘ """
+# ↓ Spinbox mouseovers
+spin01.bind('<Enter>', lambda event=None: spin01.config(foreground=butt['activeforeground'], background=butt['activebackground']))
+spin01.bind('<Leave>', lambda event=None: spin01.config(foreground=butt['foreground'], background='white'))
+# ↓ Spinbox mousewheel
+spin01.unbind('<MouseWheel>')
+spin01.bind('<MouseWheel>', incWheel)
+# ↓ Double-click to open image
+zanyato.bind('<Double-Button-1>', GetSource)
+frame_img.bind('<Double-Button-1>', GetSource)
+# ↓ "File..." mouseover
+butt_file.bind('<Enter>', lambda event=None: butt_file.config(relief=butt['overrelief']))
+butt_file.bind('<Leave>', lambda event=None: butt_file.config(relief=butt['relief']))
+# ↓ Global stuff
+sortir.bind('<Button-3>', ShowMenu)
+sortir.bind_all('<Alt-f>', ShowMenu)
+sortir.bind_all('<Control-o>', GetSource)
+sortir.bind_all('<Control-q>', DisMiss)
 
 # ↓ Center window horizontally, +100 vertically
 sortir.update()

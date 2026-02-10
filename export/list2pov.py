@@ -30,10 +30,10 @@ where:
 
 - ``image3d``: image as list of lists of lists of int channel values;
 - ``maxcolors``: maximum of channel value in ``image3d`` list (int),
-255 for 8 bit and 65535 for 16 bit input;
+  255 for 8 bit and 65535 for 16 bit input;
 - ``result_file_name``: name of POV-Ray file to export;
 - ``threshold``: local contrast threshold (maximal difference in 2x2 pixels area),
-above which geometry switch from №3 to №1.
+  above which geometry switch from №3 to №1.
 
 Reference
 ---------
@@ -62,14 +62,14 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 # 0.0.1.0   Initial standalone img2mesh version with 2x2 folding mesh, Dec 2023.
 # 0.0.2.0   Switched to 1x4 pyramid mesh, Jan 2024.
 # 0.0.7.0   Standalone img2mesh stable.
-# 2.9.1.0   Total rewrite to remove all general transforms from POV-Ray lead to
-#   rendering speed to increase more than expected.
+# 2.9.1.0   Total rewrite (1 Sep 2024) to remove all general transforms
+#   from POV-Ray lead to rendering speed to increase more than expected.
 #   Internal brightness map transfer function added.
-#   Versioning set to MAINVERSION.MONTH_since_Jan_2024.DAY.subversion
+#   Versioning set to MAINVERSION.MONTH_since_beginning_of_2024.DAY.subversion
 # 2.14.14.2 LAST RELEASE OF v2.
 #   Rewritten from standalone img2pov to module list2pov.
 #   Exported file may be used both as scene and as include.
-#   Simplified mesh writing syntaxis with functions; intensity multiplication on opacity.
+#   Simplified mesh writing syntax with functions; intensity multiplication on opacity.
 # 3.14.15.1 Mesh geometry completely changed to ver. 3.
 # 3.19.8.1  Clipping zero or transparent pixels.
 # 3.20.1.9  Since pyramid top is exactly in the middle,
@@ -78,12 +78,13 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 #   depending on neighbour differences threshold.
 #   Threshold set ad hoc and needs more experiments.
 # 3.23.13.13    All docstrings go to ReST.
+# 3.26.10.10    Pixel reading scheme changed.
 
 __author__ = 'Ilya Razmanov'
-__copyright__ = '(c) 2023-2025 Ilya Razmanov'
+__copyright__ = '(c) 2023-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.23.13.13'
+__version__ = '3.26.10.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -92,27 +93,27 @@ from time import strftime
 
 
 def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
-    """Convert nested 3D list of X, Y, Z coordinates to POV-Ray POV heightfield triangle mesh.
+    """Convert image (nested 3D list of ``x``, ``y``, ``z`` coordinates)
+    to POV-Ray triangle mesh.
 
-        :param image3d: image as list of lists of lists of int channel values;
-        :type image3d: list[list[list[int]]
-        :param int maxcolors: maximum of channel value in ``image3d`` list (int),
-    255 for 8 bit and 65535 for 16 bit input;
-        :param str resultfilename: name of POV file to export;
-        :param float threshold: local contrast threshold (maximal difference
-    in 2x2 pixels area), above which geometry switch from №3 to №1.
+    :param image3d: image as list of lists of lists of int channel values;
+    :type image3d: list[list[list[int]]
+    :param int maxcolors: maximum of channel value in ``image3d`` list (int),
+        255 for 8 bit and 65535 for 16 bit input;
+    :param str resultfilename: name of POV file to export;
+    :param float threshold: local contrast threshold (maximal difference
+        in 2x2 pixels area), above which geometry switch from №3 to №1.
 
     """
 
-    Y = len(image3d)
-    X = len(image3d[0])
-    Z = len(image3d[0][0])
+    # ↓ Determining image size
+    Y, X, Z = (len(image3d), len(image3d[0]), len(image3d[0][0]))
 
     """ ╔═══════════════╗
         ║ src functions ║
         ╚═══════════════╝ """
 
-    def pixel(x: int | float, y: int | float) -> list[int | float]:
+    def _pixel(x: int | float, y: int | float) -> list[int | float]:
         """Getting whole pixel from image list, force repeat edge instead of out of range.
         Returns list[channel,] for pixel x, y."""
 
@@ -123,35 +124,24 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
         return pixelvalue
 
-    def src(x: int | float, y: int | float, z: int) -> int | float:
-        """Analog of src from FilterMeister, force repeat edge instead of out of range.
-        Returns channel z value for pixel x, y."""
-
-        cx = min((X - 1), max(0, int(x)))
-        cy = min((Y - 1), max(0, int(y)))
-
-        channelvalue = image3d[cy][cx][z]
-
-        return channelvalue
-
-    def src_lum(x: int | float, y: int | float) -> float:
+    def _src_lum(x: int | float, y: int | float) -> float:
         """Returns brightness of pixel x, y, multiplied by opacity if exists, normalized to 0..1 range."""
 
         if Z == 1:  # L
-            yntensity = src(x, y, 0)
+            yntensity = _pixel(x, y)[0]
         elif Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
-            yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
+            yntensity = _pixel(x, y)[0] * _pixel(x, y)[1] / maxcolors
         elif Z == 3:  # RGB
-            r, g, b = pixel(x, y)
+            r, g, b = _pixel(x, y)
             yntensity = 0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b
         elif Z == 4:  # RGBA, multiply calculated L by A.
-            r, g, b, a = pixel(x, y)
+            r, g, b, a = _pixel(x, y)
             yntensity = (0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b) * a / maxcolors
 
         return yntensity / float(maxcolors)
 
-    def src_lum_blin(x: float, y: float) -> float:
-        """Based on src_lum above, but returns bilinearly interpolated brightness of pixel x, y."""
+    def _src_lum_blin(x: float, y: float) -> float:
+        """Based on _src_lum above, but returns bilinearly interpolated brightness of pixel x, y."""
 
         fx = float(x)  # Force float input coordinates for interpolation
         fy = float(y)
@@ -162,8 +152,8 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         y0 = int(y)
         y1 = y0 + 1
 
-        # ↓ Reading corners src_lum (see scr_lum above) and interpolating
-        channelvalue = src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + src_lum(x0, y1) * (x1 - fx) * (fy - y0) + src_lum(x1, y0) * (fx - x0) * (y1 - fy) + src_lum(x1, y1) * (fx - x0) * (fy - y0)
+        # ↓ Reading corners _src_lum (see _src_lum above) and interpolating
+        channelvalue = _src_lum(x0, y0) * (x1 - fx) * (y1 - fy) + _src_lum(x0, y1) * (x1 - fx) * (fy - y0) + _src_lum(x1, y0) * (fx - x0) * (y1 - fy) + _src_lum(x1, y1) * (fx - x0) * (fy - y0)
 
         return channelvalue
 
@@ -196,6 +186,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 '   Using "thething_transform" is recommended way to transform object since it affects inside vector as well.',
                 '   Remember to #declare values before #include file if you want include to detect these values exist and stop declaring them on its own!\n',
                 f'Source image properties: Width {X} px, Height {Y} px, Colors per channel: {maxcolors + 1}',
+                f'Threshold applied during geometry switch: {threshold}\n',
                 'File automatically generated by',
                 f'   {f"{__name__}".rpartition(".")[2]} v. {__version__} at {strftime("%d %b %Y %H:%M:%S")}',
                 '   developed by Ilya Razmanov aka Ilyich the Toad',
@@ -335,11 +326,11 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     XY_RESCALE = 1.0 / (max(X, Y) - 1.0)  # To fit object into 1,1,1 cube
 
-    def x_out(x: int, shift: float) -> float:
+    def _x_out(x: int, shift: float) -> float:
         """Recalculate source x to result x."""
         return XY_RESCALE * (x + shift + X_OFFSET)
 
-    def y_out(y: int, shift: float) -> float:
+    def _y_out(y: int, shift: float) -> float:
         """Recalculate source y to result y."""
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
@@ -367,13 +358,13 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             if x > 0:
                 v1 = v2  # Reusing previous pixel read results
                 v4 = v3
-                v2 = src_lum(x + 1, y)
-                v3 = src_lum(x + 1, y + 1)
+                v2 = _src_lum(x + 1, y)
+                v3 = _src_lum(x + 1, y + 1)
             else:
-                v1 = src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
-                v2 = src_lum(x + 1, y)
-                v3 = src_lum(x + 1, y + 1)
-                v4 = src_lum(x, y + 1)
+                v1 = _src_lum(x, y)  # Current pixel to process and write. Then going to neighbours
+                v2 = _src_lum(x + 1, y)
+                v3 = _src_lum(x + 1, y + 1)
+                v4 = _src_lum(x, y + 1)
 
             # ↓ Switch between geometry №1 and №3.
             #   Threshold set ad hoc and is subject to change
@@ -391,25 +382,25 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             #   Triangles are described clockwise.
 
             if (v1 + v2 + v0) > (0.5 / maxcolors):
-                triangle_120 = f'\n    triangle {{<{f"{x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
+                triangle_120 = f'\n    triangle {{<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
                 # ↑ Triangle 1-2-0
             else:
                 triangle_120 = ''
 
             if (v0 + v2 + v3) > (0.5 / maxcolors):
-                triangle_230 = f'\n    triangle {{<{f"{x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
+                triangle_230 = f'\n    triangle {{<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
                 # ↑ Triangle 2-3-0
             else:
                 triangle_230 = ''
 
             if (v0 + v3 + v4) > (0.5 / maxcolors):
-                triangle_340 = f'\n    triangle {{<{f"{x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
+                triangle_340 = f'\n    triangle {{<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
                 # ↑ Triangle 3-4-0
             else:
                 triangle_340 = ''
 
             if (v0 + v1 + v4) > (0.5 / maxcolors):
-                triangle_410 = f'\n    triangle {{<{f"{x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
+                triangle_410 = f'\n    triangle {{<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
                 # ↑ Triangle 4-1-0
             else:
                 triangle_410 = ''
@@ -463,8 +454,6 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     return None
 
-
-# ↑ list2pov finished
 
 # ↓ Dummy stub for standalone execution attempt
 if __name__ == '__main__':
