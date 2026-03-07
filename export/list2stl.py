@@ -78,12 +78,13 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 #   Threshold set ad hoc and needs more experiments.
 # 3.23.13.13    All docstrings go to ReST.
 # 3.26.10.10    Pixel reading scheme changed.
+# 3.27.7.9      Bug with 3-4-0 / 4-1-0 fixed.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.26.10.10'
+__version__ = '3.27.7.9'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -296,6 +297,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                         f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
                         f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
                         '    endloop\n',
+                        '  endfacet\n',
                     ]
                 )
                 # ↓ bottom part 4-3-0
@@ -314,7 +316,6 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 # ↓ top part 4-1-0
                 tops.extend(
                     [
-                        '  endfacet\n',
                         f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 1), v4, _x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
                         '    outer loop\n',
                         f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
