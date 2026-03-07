@@ -44,7 +44,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.26.10.10'  # 10 Feb 2026
+__version__ = '3.27.8.1'  # 8 Mar 2026
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -55,10 +55,10 @@ from tkinter import Button, DoubleVar, Frame, Label, Menu, Menubutton, PhotoImag
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showinfo
 
-from pypng.pnglpng import png2list
-from pypnm.pnmlpnm import list2bin, pnm2list
+from pypng import png2list
+from pypnm import list2bin, pnm2list
 
-from export import list2dxf, list2obj, list2pov, list2stl
+from list2mesh import list2dxf, list2obj, list2pov, list2stl
 
 
 def DisMiss(event=None) -> None:
@@ -232,7 +232,7 @@ def SaveAsPOV() -> None:
 
     # ↓ Converting list to POV and saving as "savefilename"
     UIBusy()
-    list2pov.list2pov(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
+    list2pov(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
@@ -254,7 +254,7 @@ def SaveAsOBJ() -> None:
 
     # ↓ Converting list to OBJ and saving as "savefilename"
     UIBusy()
-    list2obj.list2obj(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
+    list2obj(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
@@ -276,7 +276,7 @@ def SaveAsSTL() -> None:
 
     # ↓ Converting list to STL and saving as "savefilename"
     UIBusy()
-    list2stl.list2stl(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
+    list2stl(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
@@ -298,7 +298,7 @@ def SaveAsDXF() -> None:
 
     # ↓ Converting list to DXF and saving as "savefilename"
     UIBusy()
-    list2dxf.list2dxf(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
+    list2dxf(image3D, maxcolors, savefilename, threshold=float(geometry_threshold.get()))
     UINormal()
 
 
@@ -523,8 +523,13 @@ butt_file.bind('<Leave>', lambda event=None: butt_file.config(relief=butt['relie
 # ↓ Global stuff
 sortir.bind('<Button-3>', ShowMenu)
 sortir.bind_all('<Alt-f>', ShowMenu)
+sortir.bind_all('<Alt-F>', ShowMenu)
 sortir.bind_all('<Control-o>', GetSource)
+sortir.bind_all('<Control-O>', GetSource)
 sortir.bind_all('<Control-q>', DisMiss)
+sortir.bind_all('<Control-Q>', DisMiss)
+sortir.bind_all('<Control-w>', DisMiss)
+sortir.bind_all('<Control-W>', DisMiss)
 
 # ↓ Center window horizontally, +100 vertically
 sortir.update()

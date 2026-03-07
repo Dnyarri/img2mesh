@@ -8,9 +8,6 @@ list2pov
 Conversion of image heightfield to triangle mesh in POV-Ray format
 ------------------------------------------------------------------
 
-Created by: `Ilya Razmanov<mailto:ilyarazmanov@gmail.com>`_
-aka `Ilyich the Toad<mailto:amphisoft@gmail.com>`_.
-
 Overview
 --------
 
@@ -84,7 +81,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.26.10.10'
+__version__ = '3.27.8.1'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -101,8 +98,9 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     :param int maxcolors: maximum of channel value in ``image3d`` list (int),
         255 for 8 bit and 65535 for 16 bit input;
     :param str resultfilename: name of POV file to export;
-    :param float threshold: local contrast threshold (maximal difference
-        in 2x2 pixels area), above which geometry switch from №3 to №1.
+    :param float threshold: local contrast threshold (maximal brightness
+        difference in 2x2 pixels area), above which geometry switch
+        from smooth №3 to sharp №1.
 
     """
 
