@@ -69,12 +69,13 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 # per pyramid write(''.join(list)), ca. 20% speedup.
 # 3.23.13.13    All docstrings go to ReST.
 # 3.26.10.10    Pixel reading scheme changed.
+# 3.27.10.10    Turned to per row output to increase buffer.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.8.1'
+__version__ = '3.27.10.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -190,6 +191,7 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     # ↑ Not needed for Python but Ruff gets mad about "Undefined name" without it.
 
     for y in range(Y - 1):
+        row = []  # Starting a row of pyramids.
         for x in range(X - 1):
             if x > 0:
                 v1 = v2
@@ -215,6 +217,7 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             # ↓ Finally going to build a pyramid!
             #   Triangles are described clockwise, then connection order reset counterclockwise.
             pyramid = []
+
             if (v1 + v2 + v0) > (0.5 / maxcolors):
                 pyramid.extend(
                     [
@@ -252,12 +255,11 @@ def list2obj(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     ]
                 )  # ↑ triangle 4-1-0, order changed to counterclockwise
 
-            # ↓ Built pyramid as list, now writing pyramid
-            #   as single string in attempt to reduce disk access.
-            #   .write(.join(pyramid)) gives ca. 20% speed up vs .writelines()
-            resultfile.write(''.join(pyramid))
-
-            # ↑ Pyramid construction complete. Ave me!
+            # ↓ Pyramid construction complete. Ave me!
+            #   Now adding it to a row.
+            row.extend(pyramid)
+        # ↓ Finally writing a row to file.
+        resultfile.write(''.join(row))
 
     resultfile.write('# end pryanik_nepechatnyj')  # closing object
 

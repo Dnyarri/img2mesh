@@ -76,12 +76,15 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 #   Threshold set ad hoc and needs more experiments.
 # 3.23.13.13    All docstrings go to ReST.
 # 3.26.10.10    Pixel reading scheme changed.
+# 3.27.10.10    Rewritten from condensed f-strings to sparse list
+#   in attempt to make it easier to edit further.
+#   Turned to per row output to increase buffer.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.8.1'
+__version__ = '3.27.10.10'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -280,9 +283,9 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 '    pigment {',
                 '    gradient z',
                 '      colour_map {',
-                '        [0.0, rgb <1, 0, 0>]',
-                '        [0.5, rgb <0, 0, 1>]',
-                '        [1.0, rgb <1, 1, 1>]',
+                '        [0.0, rgb <1, 0, 0>]',  # [0.0, rgb <0.0, 1.5, 0.0>]
+                '        [0.5, rgb <0, 0, 1>]',  # [0.5, rgb <0.88, 0.62, 0>]
+                '        [1.0, rgb <1, 1, 1>]',  # [1.0, rgb <1.5, 0.0, 0.0>]
                 '      }',
                 '    }',
                 '    finish {phong 1.0}',
@@ -344,8 +347,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     # ↑ Not needed for Python but Ruff gets mad about "Undefined name" without it.
 
     for y in range(Y - 1):  # Mesh includes extra pixels at the right and below, therefore -1
-        resultfile.write(f'\n\n   // Row {y}')
-
+        row = [f'\n\n   // Row {y}']  # Starting a row of pyramids.
         for x in range(X - 1):  # Mesh includes extra pixels at the right and below, therefore -1
             """Pixel order around default pixel 1.
             ┌───┬───┐
@@ -378,36 +380,65 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
             # ↓ Finally going to build a pyramid!
             #   Triangles are described clockwise.
+            pyramid = []
 
+# ↓ Triangle 1-2-0
             if (v1 + v2 + v0) > (0.5 / maxcolors):
-                triangle_120 = f'\n    triangle {{<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
-                # ↑ Triangle 1-2-0
-            else:
-                triangle_120 = ''
+                pyramid.extend([
+'\n    triangle{',
+f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})>',
 
+f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+
+f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+'}',
+                    ])
+# ↑ Triangle 1-2-0
+
+# ↓ Triangle 2-3-0
             if (v0 + v2 + v3) > (0.5 / maxcolors):
-                triangle_230 = f'\n    triangle {{<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
-                # ↑ Triangle 2-3-0
-            else:
-                triangle_230 = ''
+                pyramid.extend([
+'\n    triangle{',
+f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})>',
 
+f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+
+f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+'}',
+                    ])
+# ↑ Triangle 2-3-0
+
+# ↓ Triangle 3-4-0
             if (v0 + v3 + v4) > (0.5 / maxcolors):
-                triangle_340 = f'\n    triangle {{<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
-                # ↑ Triangle 3-4-0
-            else:
-                triangle_340 = ''
+                pyramid.extend([
+'\n    triangle{',
+f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})>',
 
+f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+
+f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+'}',
+                    ])
+# ↑ Triangle 3-4-0
+
+# ↓ Triangle 4-1-0
             if (v0 + v1 + v4) > (0.5 / maxcolors):
-                triangle_410 = f'\n    triangle {{<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})> <{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>}}'
-                # ↑ Triangle 4-1-0
-            else:
-                triangle_410 = ''
+                pyramid.extend([
+'\n    triangle{'
+f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})>',
 
-            # ↓ Built triangles as four strings, now writing pyramid
-            #   as single string in attempt to reduce disk access.
-            resultfile.write(f'{triangle_120}{triangle_230}{triangle_340}{triangle_410}')
+f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})>',
 
-            # ↑ Pyramid construction complete. Ave me!
+f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+'}',
+                    ])
+# ↑ Triangle 4-1-0
+
+            # ↓ Pyramid construction complete. Ave me!
+            #   Now adding it to a row.
+            row.extend(pyramid)
+        # ↓ Finally writing a row to file.
+        resultfile.write(''.join(row))
 
     resultfile.write(
         '\n'.join(
