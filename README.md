@@ -8,7 +8,7 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 | Fig. 1. *Example of img2mesh output rendering* |
 | :---: |
-| [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html) |
+| [![Example of img2mesh output rendering](https://dnyarri.github.io/imgmesh/640/img2mesh.png "Example of img2mesh output rendering")](https://dnyarri.github.io/img2mesh.html "Image to 3d mesh converter main page") |
 | *Example of rendering obtained from black and white drawing (made in Inkscape from text and circle, with a bit of Gaussian Blur added in GIMP) after conversion to 3D mesh with img2mesh and changing texture from default to metallic in POV-Ray.* |
 
 ## Format compatibility
@@ -31,7 +31,11 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
   - [**list2dxf.py**](https://github.com/Dnyarri/img2mesh/blob/main/export/list2dxf.py): nested 3D list to Autodesk ASCII DXF conversion and output Exported file contain elevation map mesh only;
 
-- **pypng** and **pypnm** modules contain components providing PNG and PPM image files reading as nested 3D lists.
+- **pypng** and **pypnm** folders comprise:
+
+  - [PyPNM module, providing image data preview, as well as PPM ang PGM files support](https://dnyarri.github.io/pypnm.html "Pure Python PNM image support module");
+
+  - [PyPNG module, providing PNG files support](https://gitlab.com/drj11/pypng "Pure Python PNG format module").
 
 | Fig. 2. *Preview of img2mesh output files* |
 | :---: |
