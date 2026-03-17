@@ -21,7 +21,7 @@ Usage
 
 ::
 
-    list2pov.list2pov(image3d, maxcolors, result_file_name)
+    list2pov.list2pov(image3d, maxcolors, result_file_name, threshold)
 
 where:
 
@@ -84,7 +84,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.10.10'
+__version__ = '3.27.17.17'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
