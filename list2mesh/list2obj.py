@@ -51,7 +51,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '1.22.2.2'
+__version__ = '1.27.19.5'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -91,15 +91,17 @@ def list2obj(image3d, maxcolors, resultfilename):
         """Returns brightness of pixel x, y, multiplied by opacity if exists, normalized to 0..1 range."""
 
         if Z == 1:  # L
-            yntensity = src(x, y, 0)
-        elif Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
-            yntensity = src(x, y, 0) * src(x, y, 1) / maxcolors
-        elif Z == 3:  # RGB
-            yntensity = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
-        elif Z == 4:  # RGBA, multiply calculated L by A.
-            yntensity = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
-
-        return yntensity / float(maxcolors)
+            l = src(x, y, 0)
+            return l / maxcolors
+        if Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
+            l = src(x, y, 0) * src(x, y, 1) / maxcolors
+            return l / maxcolors
+        if Z == 3:  # RGB
+            l = 0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)
+            return l / maxcolors
+        if Z > 3:  # RGBA, multiply calculated L by A.
+            l = (0.298936021293775 * src(x, y, 0) + 0.587043074451121 * src(x, y, 1) + 0.114020904255103 * src(x, y, 2)) * src(x, y, 3) / maxcolors
+            return l / maxcolors
 
 
     """ ╔══════════════════╗

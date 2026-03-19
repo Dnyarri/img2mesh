@@ -25,7 +25,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '1.22.2.2'
+__version__ = '1.27.19.5'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -36,7 +36,7 @@ from tkinter import Button, Frame, Label, Menu, PhotoImage, Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showinfo
 
-from export import list2dxf, list2obj, list2pov, list2stl
+from list2mesh import list2dxf, list2obj, list2pov, list2stl
 from pypng.pnglpng import png2list
 from pypnm.pnmlpnm import list2bin, pnm2list
 
