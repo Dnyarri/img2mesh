@@ -84,7 +84,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.17.17'
+__version__ = '3.27.19.7'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -129,17 +129,21 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         """Returns brightness of pixel x, y, multiplied by opacity if exists, normalized to 0..1 range."""
 
         if Z == 1:  # L
-            yntensity = _pixel(x, y)[0]
-        elif Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
-            yntensity = _pixel(x, y)[0] * _pixel(x, y)[1] / maxcolors
-        elif Z == 3:  # RGB
+            l = _pixel(x, y)[0]
+            return l / maxcolors
+        if Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
+            l, a = _pixel(x, y)
+            la = l * a / maxcolors
+            return la / maxcolors
+        if Z == 3:  # RGB
             r, g, b = _pixel(x, y)
-            yntensity = 0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b
-        elif Z == 4:  # RGBA, multiply calculated L by A.
+            l = 0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b
+            return l / maxcolors
+        if Z > 3:  # RGBA, multiply calculated L by A.
             r, g, b, a = _pixel(x, y)
-            yntensity = (0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b) * a / maxcolors
-
-        return yntensity / float(maxcolors)
+            l = 0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b
+            la = l * a / maxcolors
+            return la / maxcolors
 
     def _src_lum_blin(x: float, y: float) -> float:
         """Based on _src_lum above, but returns bilinearly interpolated brightness of pixel x, y."""
@@ -382,57 +386,56 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             #   Triangles are described clockwise.
             pyramid = []
 
-# ↓ Triangle 1-2-0
+            # ↓ Triangle 1-2-0
             if (v1 + v2 + v0) > (0.5 / maxcolors):
-                pyramid.extend([
-'\n    triangle{',
-f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                pyramid.extend(
+                    [
+                        '\n    triangle{',
+                        f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        '}',
+                    ]
+                )
+            # ↑ Triangle 1-2-0
 
-f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-
-f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-'}',
-                    ])
-# ↑ Triangle 1-2-0
-
-# ↓ Triangle 2-3-0
+            # ↓ Triangle 2-3-0
             if (v0 + v2 + v3) > (0.5 / maxcolors):
-                pyramid.extend([
-'\n    triangle{',
-f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                pyramid.extend(
+                    [
+                        '\n    triangle{',
+                        f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v2:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        '}',
+                    ]
+                )
+            # ↑ Triangle 2-3-0
 
-f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-
-f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-'}',
-                    ])
-# ↑ Triangle 2-3-0
-
-# ↓ Triangle 3-4-0
+            # ↓ Triangle 3-4-0
             if (v0 + v3 + v4) > (0.5 / maxcolors):
-                pyramid.extend([
-'\n    triangle{',
-f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                pyramid.extend(
+                    [
+                        '\n    triangle{',
+                        f'<{f"{_x_out(x, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v3:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        '}',
+                    ]
+                )
+            # ↑ Triangle 3-4-0
 
-f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-
-f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-'}',
-                    ])
-# ↑ Triangle 3-4-0
-
-# ↓ Triangle 4-1-0
+            # ↓ Triangle 4-1-0
             if (v0 + v1 + v4) > (0.5 / maxcolors):
-                pyramid.extend([
-'\n    triangle{'
-f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-
-f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-
-f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
-'}',
-                    ])
-# ↑ Triangle 4-1-0
+                pyramid.extend(
+                    [
+                        f'\n    triangle{{<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 1):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v4:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v1:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        f'<{f"{_x_out(x, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, {f"{_y_out(y, 0.5):.{PRECISION}}".rstrip("0").rstrip(".")}, Map({f"{v0:.{PRECISION}}".rstrip("0").rstrip(".")})>',
+                        '}',
+                    ]
+                )
+            # ↑ Triangle 4-1-0
 
             # ↓ Pyramid construction complete. Ave me!
             #   Now adding it to a row.
