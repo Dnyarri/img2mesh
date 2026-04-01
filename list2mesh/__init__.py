@@ -1,4 +1,4 @@
-"""3D nested list to 3D triangle mesh export.
+"""3D nested list to 3D triangle mesh export, Geometry №4.
 
 =========
 list2mesh
@@ -35,8 +35,8 @@ where:
 - **``maxcolors``**: maximum of channel value in ``image3d`` list (int),
   255 for 8 bit and 65535 for 16 bit input;
 - **``result_file_name``**: name of POV-Ray file to export;
-- **``threshold``**: local contrast threshold (maximal difference in 2x2 pixels area),
-  above which geometry switch from smooth №3 to sharp №1.
+- **``threshold``**: local contrast threshold (maximal difference
+  in 2x2 pixels area), above which geometry switch from smooth №3 to sharp №1.
 
 References
 ----------
@@ -55,13 +55,24 @@ References
 
 .. _STL: https://www.loc.gov/preservation/digital/formats/fdd/fdd000506.shtml
 
+-----
+Main site: `The Toad's Slimy Mudhole`_
+
+.. _The Toad's Slimy Mudhole: https://dnyarri.github.io
+
+img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
+
+.. _img2mesh@Github: https://github.com/Dnyarri/img2mesh
+
+.. _img2mesh@Gitflic: https://gitflic.ru/project/dnyarri/img2mesh
+
 """
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2023-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.19.7'
+__version__ = '4.27.20.16'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'

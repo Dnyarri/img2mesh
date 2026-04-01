@@ -44,7 +44,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.19.7'  # 19 Mar 2026
+__version__ = '4.28.1.8'  # 1 Apr 2026
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -91,10 +91,12 @@ def UINormal() -> None:
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
             widget['state'] = 'normal'
+            widget['cursor'] = ''
     for widget in frame_control.winfo_children():
         if widget.winfo_class() in ('Label', 'Spinbox'):
             widget['state'] = 'normal'
     info_string.config(text=info_normal['txt'], foreground=info_normal['fg'], background=info_normal['bg'])
+    sortir['cursor'] = ''
     sortir.update()
 
 
@@ -104,10 +106,12 @@ def UIBusy() -> None:
     for widget in frame_img.winfo_children():
         if widget.winfo_class() in ('Label', 'Button'):
             widget['state'] = 'disabled'
+            widget['cursor'] = 'wait'
     for widget in frame_control.winfo_children():
         if widget.winfo_class() in ('Label', 'Spinbox'):
             widget['state'] = 'disabled'
     info_string.config(text=info_busy['txt'], foreground=info_busy['fg'], background=info_busy['bg'])
+    sortir['cursor'] = 'wait'
     sortir.update()
 
 
@@ -133,12 +137,6 @@ def GetSource(event=None) -> None:
 
     UIBusy()
 
-    """ ┌────────────────────────────────────────┐
-        │ Loading file, converting data to list. │
-        │  NOTE: maxcolors, image3D are GLOBALS! │
-        │  They are used during export!          │
-        └────────────────────────────────────────┘ """
-
     if Path(sourcefilename).suffix.lower() == '.png':
         # ↓ Reading image as list
         X, Y, Z, maxcolors, image3D, info = png2list(sourcefilename)
@@ -150,14 +148,8 @@ def GetSource(event=None) -> None:
     else:
         raise ValueError('Extension not recognized')
 
-    """ ┌─────────────────────────────────────────────────────────────────────────┐
-        │ Converting list to bytes of PPM-like structure "preview_data" in memory │
-        └────────────────────────────────────────────────────────────────────────-┘ """
     preview_data = list2bin(image3D, maxcolors, show_chessboard=True)
 
-    """ ┌────────────────────────────────────────────────┐
-        │ Now showing "preview_data" bytes using Tkinter │
-        └────────────────────────────────────────────────┘ """
     preview = PhotoImage(data=preview_data)
 
     zoom_show = {  # What to show below preview
@@ -182,7 +174,8 @@ def GetSource(event=None) -> None:
         3: preview.zoom(4, 4),
         4: preview.zoom(5, 5),
     }
-
+    if X + 16 > sortir.winfo_screenwidth() or Y + 152 > sortir.winfo_screenheight():
+        zoomOut()  # We'be better be on a safe side of the zoom
     preview = zoom_do[zoom_factor]
     zanyato.config(image=preview, compound='none', background=zanyato.master['background'], relief='flat', borderwidth=1)
     zanyato.pack_configure(pady=max(0, 16 - (preview.height() // 2)))
@@ -211,6 +204,9 @@ def GetSource(event=None) -> None:
     menu01.entryconfig('Export STL...', state='normal')
     menu01.entryconfig('Image Info...', state='normal')
     UINormal()
+    h_spacer = min(sortir.winfo_reqwidth(), 9 * sortir.winfo_screenwidth() // 10)
+    v_spacer = min(sortir.winfo_reqheight(), 9 * sortir.winfo_screenheight() // 10)
+    sortir.minsize(h_spacer, v_spacer)
     sortir.geometry(f'+{(sortir.winfo_screenwidth() - sortir.winfo_width()) // 2}+{(sortir.winfo_screenheight() - sortir.winfo_height()) // 2 - 32}')
 
 
@@ -380,10 +376,12 @@ def valiDig(new_value):
 sourcefilename = ''
 zoom_factor = 0
 X = Y = Z = maxcolors = None
+product_name = 'img2mesh'
+product_about = f'{product_name} {__version__}'
 
 sortir = Tk()
 
-sortir.title('img2mesh')
+sortir.title(product_about)
 
 # ↓ ICO icon.
 #   Tkinter seem to read icon with index=0 and interpolate to unknown size.
@@ -409,6 +407,14 @@ info_busy = {
     'bg': 'yellow',
 }
 
+# ↓ Info string with info statuses above
+info_string = Label(sortir, text=info_normal['txt'], font=('courier', 7), foreground=info_normal['fg'], background=info_normal['bg'], relief='groove')
+info_string.pack(side='bottom', padx=0, pady=(2, 0), fill='both')
+
+# ↓ Info string binding for mouse over
+info_string.bind('<Enter>', lambda event=None: info_string.config(text=product_about))
+info_string.bind('<Leave>', lambda event=None: info_string.config(text=info_normal['txt']))
+
 # ↓ Buttons dictionaries
 butt = {
     'font': ('helvetica', 12),
@@ -421,9 +427,6 @@ butt = {
     'activeforeground': 'dark blue',
     'activebackground': '#E5F1FB',
 }
-
-info_string = Label(sortir, text=info_normal['txt'], font=('courier', 7), foreground=info_normal['fg'], background=info_normal['bg'], relief='groove')
-info_string.pack(side='bottom', padx=0, pady=(2, 0), fill='both')
 
 frame_control = Frame(sortir, borderwidth=2, relief='groove')
 frame_control.pack(side='top', anchor='nw', expand=False)
@@ -461,7 +464,7 @@ butt_file['menu'] = menu01
 info01 = Label(frame_control, text='Threshold:', font=(butt['font'][0], butt['font'][1] - 2), state='disabled')
 info01.pack(side='left', padx=(24, 2))
 
-geometry_threshold = DoubleVar(value=0.05)
+geometry_threshold = DoubleVar(value=0.03)
 spin01 = Spinbox(
     frame_control,
     from_=0,
@@ -533,7 +536,9 @@ sortir.bind_all('<Control-W>', DisMiss)
 
 # ↓ Center window horizontally, +100 vertically
 sortir.update()
-sortir.minsize(frame_control.winfo_width(), 128)
+h_spacer = max(frame_img.winfo_reqwidth(), info_string.winfo_reqwidth())
+v_spacer = sortir.winfo_reqheight()
+sortir.minsize(h_spacer, v_spacer)
 sortir.geometry(f'+{(sortir.winfo_screenwidth() - sortir.winfo_width()) // 2}+100')
 
 sortir.mainloop()

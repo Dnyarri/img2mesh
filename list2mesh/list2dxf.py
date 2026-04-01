@@ -29,8 +29,8 @@ where:
 - ``maxcolors``: maximum of channel value in ``image3d`` list (int),
   255 for 8 bit and 65535 for 16 bit input;
 - ``result_file_name``: name of DXF file to export;
-- ``threshold``: local contrast threshold (maximal difference in 2x2 pixels area),
-  above which geometry switch from №3 to №1.
+- ``threshold``: local contrast threshold (maximal difference
+  in 2x2 pixels area), above which geometry switch from №3 to №1.
 
 Reference
 ---------
@@ -70,12 +70,13 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 # 3.23.13.13    All docstrings go to ReST.
 # 3.26.10.10    Pixel reading scheme changed.
 # 3.27.10.10    Turned to per row output to increase buffer.
+# 4.28.1.8  Geometry №4 with clearer rendering and less artifacts.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.19.7'
+__version__ = '4.28.1.8'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -91,7 +92,7 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     :type image3d: list[list[list[int]]
     :param int maxcolors: maximum of channel value in ``image3d`` list (int),
         255 for 8 bit and 65535 for 16 bit input;
-    :param str resultfilename: name of DXF file to export;
+    :param str resultfilename: name of ASCII DXF file to export;
     :param float threshold: local contrast threshold (maximal brightness
         difference in 2x2 pixels area), above which geometry switch
         from smooth №3 to sharp №1.
@@ -106,20 +107,18 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         ╚═══════════════╝ """
 
     def _pixel(x: int | float, y: int | float) -> list[int | float]:
-        """Getting whole pixel from image list, force repeat edge instead of out of range.
-        Returns list[channel,] for pixel x, y.
+        """Getting whole pixel from image list, force repeat edge
+        instead of out of range. Returns list[channel,] for pixel(x, y).
 
-        **WARNING:** Coordinate system mirrored against Y!"""
+        .. warning:: Coordinate system mirrored against Y!"""
 
         cx = min((X - 1), max(0, int(x)))
         cy = min((Y - 1), max(0, int(Y - 1 - y)))
-
         pixelvalue = image3d[cy][cx]
-
         return pixelvalue
 
     def _src_lum(x: int | float, y: int | float) -> float:
-        """Returns brightness of pixel x, y, multiplied by opacity if exists, normalized to 0..1 range."""
+        """Returns brightness of pixel(x, y), multiplied by opacity if exists, normalized to 0..1 range."""
 
         if Z == 1:  # L
             l = _pixel(x, y)[0]
@@ -139,7 +138,7 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
             return la / maxcolors
 
     def _src_lum_blin(x: float, y: float) -> float:
-        """Based on _src_lum above, but returns bilinearly interpolated brightness of pixel x, y."""
+        """Based on _src_lum above, but returns bilinearly interpolated brightness of pixel(x, y)."""
 
         fx = float(x)  # Force float input coordinates for interpolation
         fy = float(y)
@@ -160,18 +159,16 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         ╚══════════════════╝ """
 
     # ↓ Global positioning and scaling to tweak.
-
     X_OFFSET = -0.5 * (X - 1.0)  # To be added BEFORE rescaling to center object.
     Y_OFFSET = -0.5 * (Y - 1.0)  # To be added BEFORE rescaling to center object
-
     XY_RESCALE = 1.0 / (max(X, Y) - 1.0)  # To fit object into 1,1,1 cube
 
     def _x_out(x: int, shift: float) -> float:
-        """Recalculate source x to result x"""
+        """Recalculate source x to result x."""
         return XY_RESCALE * (x + shift + X_OFFSET)
 
     def _y_out(y: int, shift: float) -> float:
-        """Recalculate source y to result y"""
+        """Recalculate source y to result y."""
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
     # ↓ Float output precision. Max for Python double is supposed to be 16, however
@@ -180,7 +177,7 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
     resultfile = open(resultfilename, 'w')
 
-    """ ┌────────────┐
+    """ ╒════════════╕
         │ DXF header │
         └────────────┘ """
     resultfile.write(
@@ -193,12 +190,11 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         )
     )
 
-    """ ┌──────┐
+    """ ╒══════╕
         │ Mesh │
         └──────┘ """
 
-    v1 = v2 = v3 = v4 = 0.0
-    # ↑ Not needed for Python but Ruff gets mad about "Undefined name" without it.
+    v1 = v2 = v3 = v4 = 0.0  # Not needed for Python but Ruff gets mad without it.
 
     for y in range(Y - 1):
         row = []  # Starting a row of pyramids.
@@ -214,65 +210,108 @@ def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 v3 = _src_lum(x + 1, y + 1)
                 v4 = _src_lum(x, y + 1)
 
-            # ↓ Switch between geometry №1 and №3.
-            #   Threshold set ad hoc and is subject to change
-            if abs(v1 - v3) > threshold or abs(v2 - v4) > threshold:
-                if abs(v1 - v3) > abs(v2 - v4):
-                    v0 = (v2 + v4) / 2
-                else:
-                    v0 = (v1 + v3) / 2
-            else:
-                v0 = (v1 + v2 + v3 + v4) / 4
-
             # ↓ Finally going to build a pyramid!
-            #   Triangles are described clockwise.
+            #   Triangles are described clockwise;
+            #   remember of mirroring in `_pixel`.
             pyramid = []
+            done = False  # True when pyramid was written
 
-            if (v1 + v2 + v0) > (0.5 / maxcolors):
-                pyramid.extend(
-                    [
-                        '3DFACE\n8\nPRYANIK\n',
-                        f'10\n{_x_out(x, 0):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
-                        f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 0):.{PRECISION}}\n31\n{v2:.{PRECISION}}\n',
-                        f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                        '62\n0\n0\n',
-                    ]
-                )
-            if (v0 + v2 + v3) > (0.5 / maxcolors):
-                pyramid.extend(
-                    [
-                        '3DFACE\n8\nPRYANIK\n',
-                        f'10\n{_x_out(x, 1):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v2:.{PRECISION}}\n',
-                        f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 1):.{PRECISION}}\n31\n{v3:.{PRECISION}}\n',
-                        f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                        '62\n0\n0\n',
-                    ]
-                )
-            if (v0 + v3 + v4) > (0.5 / maxcolors):
-                pyramid.extend(
-                    [
-                        '3DFACE\n8\nPRYANIK\n',
-                        f'10\n{_x_out(x, 1):.{PRECISION}}\n20\n{_y_out(y, 1):.{PRECISION}}\n30\n{v3:.{PRECISION}}\n',
-                        f'11\n{_x_out(x, 0):.{PRECISION}}\n21\n{_y_out(y, 1):.{PRECISION}}\n31\n{v4:.{PRECISION}}\n',
-                        f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                        '62\n0\n0\n',
-                    ]
-                )
-            if (v0 + v1 + v4) > (0.5 / maxcolors):
-                pyramid.extend(
-                    [
-                        '3DFACE\n8\nPRYANIK\n',
-                        f'10\n{_x_out(x, 0):.{PRECISION}}\n20\n{_y_out(y, 1):.{PRECISION}}\n30\n{v4:.{PRECISION}}\n',
-                        f'11\n{_x_out(x, 0):.{PRECISION}}\n21\n{_y_out(y, 0):.{PRECISION}}\n31\n{v1:.{PRECISION}}\n',
-                        f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
-                        '62\n0\n0\n',
-                    ]
-                )
+            # ↓ Switch between geometry №1 and №3.
+            #   Threshold set ad hoc and is subject to change.
+            if (max(v1, v2, v3, v4) - min(v1, v2, v3, v4)) > threshold:  # Geometry №1
+                if abs(v1 - v3) > abs(v2 - v4):
+                    if (v1 + v2 + v4) > (0.5 / maxcolors):  # triangle 1-2-4
+                        pyramid.extend(
+                            [
+                                '3DFACE\n8\nPRYANIK\n',
+                                f'10\n{_x_out(x, 0):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
+                                f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 0):.{PRECISION}}\n31\n{v2:.{PRECISION}}\n',
+                                f'12\n{_x_out(x, 0):.{PRECISION}}\n22\n{_y_out(y, 1):.{PRECISION}}\n32\n{v4:.{PRECISION}}\n',
+                                '62\n0\n0\n',
+                            ]
+                        )
+                    if (v2 + v3 + v4) > (0.5 / maxcolors):  # triangle 2-3-4
+                        pyramid.extend(
+                            [
+                                '3DFACE\n8\nPRYANIK\n',
+                                f'10\n{_x_out(x, 1):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v2:.{PRECISION}}\n',
+                                f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 1):.{PRECISION}}\n31\n{v3:.{PRECISION}}\n',
+                                f'12\n{_x_out(x, 0):.{PRECISION}}\n22\n{_y_out(y, 1):.{PRECISION}}\n32\n{v4:.{PRECISION}}\n',
+                                '62\n0\n0\n',
+                            ]
+                        )
+                    done = True
+                if abs(v1 - v3) < abs(v2 - v4):
+                    if (v1 + v2 + v3) > (0.5 / maxcolors):  # triangle 1-2-3
+                        pyramid.extend(
+                            [
+                                '3DFACE\n8\nPRYANIK\n',
+                                f'10\n{_x_out(x, 0):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
+                                f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 0):.{PRECISION}}\n31\n{v2:.{PRECISION}}\n',
+                                f'12\n{_x_out(x, 1):.{PRECISION}}\n22\n{_y_out(y, 1):.{PRECISION}}\n32\n{v3:.{PRECISION}}\n',
+                                '62\n0\n0\n',
+                            ]
+                        )
+                    if (v1 + v3 + v4) > (0.5 / maxcolors):  # triangle 1-3-4
+                        pyramid.extend(
+                            [
+                                '3DFACE\n8\nPRYANIK\n',
+                                f'10\n{_x_out(x, 0):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
+                                f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 1):.{PRECISION}}\n31\n{v3:.{PRECISION}}\n',
+                                f'12\n{_x_out(x, 0):.{PRECISION}}\n22\n{_y_out(y, 1):.{PRECISION}}\n32\n{v4:.{PRECISION}}\n',
+                                '62\n0\n0\n',
+                            ]
+                        )
+                    done = True
+            if not done:  # Geometry №3
+                v0 = (v1 + v2 + v3 + v4) / 4  # ⊠ center value is average
 
-            # ↓ Pyramid construction complete. Ave me!
-            #   Now adding it to a row.
+                if (v1 + v2 + v0) > (0.5 / maxcolors):  # triangle 1-2-0
+                    pyramid.extend(
+                        [
+                            '3DFACE\n8\nPRYANIK\n',
+                            f'10\n{_x_out(x, 0):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v1:.{PRECISION}}\n',
+                            f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 0):.{PRECISION}}\n31\n{v2:.{PRECISION}}\n',
+                            f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                            '62\n0\n0\n',
+                        ]
+                    )
+                if (v0 + v2 + v3) > (0.5 / maxcolors):  # triangle 2-3-0
+                    pyramid.extend(
+                        [
+                            '3DFACE\n8\nPRYANIK\n',
+                            f'10\n{_x_out(x, 1):.{PRECISION}}\n20\n{_y_out(y, 0):.{PRECISION}}\n30\n{v2:.{PRECISION}}\n',
+                            f'11\n{_x_out(x, 1):.{PRECISION}}\n21\n{_y_out(y, 1):.{PRECISION}}\n31\n{v3:.{PRECISION}}\n',
+                            f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                            '62\n0\n0\n',
+                        ]
+                    )
+                if (v0 + v3 + v4) > (0.5 / maxcolors):  # triangle 3-4-0
+                    pyramid.extend(
+                        [
+                            '3DFACE\n8\nPRYANIK\n',
+                            f'10\n{_x_out(x, 1):.{PRECISION}}\n20\n{_y_out(y, 1):.{PRECISION}}\n30\n{v3:.{PRECISION}}\n',
+                            f'11\n{_x_out(x, 0):.{PRECISION}}\n21\n{_y_out(y, 1):.{PRECISION}}\n31\n{v4:.{PRECISION}}\n',
+                            f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                            '62\n0\n0\n',
+                        ]
+                    )
+                if (v0 + v1 + v4) > (0.5 / maxcolors):  # triangle 4-1-0
+                    pyramid.extend(
+                        [
+                            '3DFACE\n8\nPRYANIK\n',
+                            f'10\n{_x_out(x, 0):.{PRECISION}}\n20\n{_y_out(y, 1):.{PRECISION}}\n30\n{v4:.{PRECISION}}\n',
+                            f'11\n{_x_out(x, 0):.{PRECISION}}\n21\n{_y_out(y, 0):.{PRECISION}}\n31\n{v1:.{PRECISION}}\n',
+                            f'12\n{_x_out(x, 0.5):.{PRECISION}}\n22\n{_y_out(y, 0.5):.{PRECISION}}\n32\n{v0:.{PRECISION}}\n',
+                            '62\n0\n0\n',
+                        ]
+                    )
+
+            # ↓ Construction complete.
+            #   Pyramid completed and ready to place.
+            #   AVE ME!
             row.extend(pyramid)
-        # ↓ Finally writing a row to file.
+        # ↓ Flushing a row to file.
         resultfile.write(''.join(row))
 
     resultfile.write('ENDSEC\n0\nEOF\n')  # closing object

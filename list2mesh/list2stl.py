@@ -28,8 +28,8 @@ where:
 - ``maxcolors``: maximum of channel value in ``image3d`` list (int),
   255 for 8 bit and 65535 for 16 bit input;
 - ``result_file_name``: name of STL file to export;
-- ``threshold``: local contrast threshold (maximal difference in 2x2 pixels area),
-  above which geometry switch from №3 to №1.
+- ``threshold``: local contrast threshold (maximal difference
+  in 2x2 pixels area), above which geometry switch from №3 to №1.
 
 References
 ----------
@@ -76,12 +76,13 @@ img2mesh Git repositories: `img2mesh@Github`_, `img2mesh@Gitflic`_.
 # 3.23.13.13    All docstrings go to ReST.
 # 3.26.10.10    Pixel reading scheme changed.
 # 3.27.7.9      Bug with 3-4-0 / 4-1-0 fixed.
+# 4.28.1.8  Geometry №4 with clearer rendering and less artifacts.
 
 __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2024-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '3.27.19.7'
+__version__ = '4.28.1.8'
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -97,7 +98,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     :type image3d: list[list[list[int]]
     :param int maxcolors: maximum of channel value in ``image3d`` list (int),
         255 for 8 bit and 65535 for 16 bit input;
-    :param str resultfilename: name of STL file to export;
+    :param str resultfilename: name of ASCII STL file to export;
     :param float threshold: local contrast threshold (maximal brightness
         difference in 2x2 pixels area), above which geometry switch
         from smooth №3 to sharp №1.
@@ -112,40 +113,49 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         ╚═══════════════╝ """
 
     def _pixel(x: int | float, y: int | float) -> list[int | float]:
-        """Getting whole pixel from image list, force repeat edge instead of out of range.
-        Returns list[channel,] for pixel x, y.
+        """Getting whole pixel from image list, force repeat edge
+        instead of out of range. Returns list[channel,] for pixel(x, y).
 
-        **WARNING:** Coordinate system mirrored against Y!"""
+        .. warning:: Coordinate system mirrored against Y!"""
 
         cx = min((X - 1), max(0, int(x)))
         cy = min((Y - 1), max(0, int(Y - 1 - y)))
-
         pixelvalue = image3d[cy][cx]
-
         return pixelvalue
 
     def _src_lum(x: int | float, y: int | float) -> float:
-        """Returns brightness of pixel x, y, multiplied by opacity if exists, normalized to 0..1 range."""
+        """Returns brightness of pixel(x, y), multiplied by opacity if exists, normalized to 0..1 range."""
 
+        # ↓ Block against glueing zero corners of tops to their projection to bottoms,
+        #   leading to non-manifold structure.
+        #   Exact value 0.7 based on experiments and seem to provide compatibility
+        #   even with M$ software (Autodesk seem to feel fine with 0.25).
+        min_block = 0.7
+
+        # ↓ Brightness, normalized to 0..1 range.
         if Z == 1:  # L
             l = _pixel(x, y)[0]
+            l = max(l, min_block)
             return l / maxcolors
         if Z == 2:  # LA, multiply L by A. A = 0 is transparent, a = maxcolors is opaque
             l, a = _pixel(x, y)
+            l = max(l, min_block)
             la = l * a / maxcolors
             return la / maxcolors
         if Z == 3:  # RGB
             r, g, b = _pixel(x, y)
             l = 0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b
+            l = max(l, min_block)
             return l / maxcolors
         if Z > 3:  # RGBA, multiply calculated L by A.
             r, g, b, a = _pixel(x, y)
             l = 0.298936021293775 * r + 0.587043074451121 * g + 0.114020904255103 * b
+            l = max(l, min_block)
             la = l * a / maxcolors
             return la / maxcolors
 
     def _src_lum_blin(x: float, y: float) -> float:
-        """Based on _src_lum above, but returns bilinearly interpolated brightness of pixel x, y."""
+        """Based on _src_lum above, but returns bilinearly interpolated brightness of pixel(x, y)."""
 
         fx = float(x)  # Force float input coordinates for interpolation
         fy = float(y)
@@ -162,7 +172,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         return channelvalue
 
     def _normal(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, x3: float, y3: float, z3: float) -> str:
-        """Normal calculation"""
+        """Normal calculation."""
 
         nx = ((y2 - y1) * (z3 - z1)) - ((y3 - y1) * (z2 - z1))
         ny = ((z2 - z1) * (x3 - x1)) - ((x2 - x1) * (z3 - z1))
@@ -181,23 +191,21 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     # ↓ Global positioning and scaling to tweak.
     #   Offset supposed to make everyone feeling positive, rescale supposed to scale anything
     #   to [0..1.0] regardless of what the units are.
-
     X_OFFSET = Y_OFFSET = 1.0
-
     XY_RESCALE = 1.0 / (max(X, Y) - 1.0)  # To fit object into 1,1,1 cube
 
     def _x_out(x: int, shift: float) -> float:
-        """Recalculate source x to result x"""
+        """Recalculate source x to result x."""
         return XY_RESCALE * (x + shift + X_OFFSET)
 
     def _y_out(y: int, shift: float) -> float:
-        """Recalculate source y to result y"""
+        """Recalculate source y to result y."""
         return XY_RESCALE * (y + shift + Y_OFFSET)
 
     # ↓ Float output precision. Set single according to  Ref. [2]
     PRECISION = '6e'
 
-    """ ┌────────────────────────────────────────────────────┐
+    """ ╒════════════════════════════════════════════════════╕
         │ Mesh. STL header will be added during file writing │
         └────────────────────────────────────────────────────┘ """
 
@@ -205,8 +213,7 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
     sides = []  # All four sides of the object.
     bottoms = []  # Bottom of the object.
 
-    v1 = v2 = v3 = v4 = 0.0
-    # ↑ Not needed for Python but Ruff gets mad about "Undefined name" without it.
+    v1 = v2 = v3 = v4 = 0.0  # Not needed for Python but Ruff gets mad without it.
 
     for y in range(Y - 1):
         for x in range(X - 1):
@@ -223,123 +230,216 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
             # ↓ Switch between geometry №1 and №3.
             #   Threshold set ad hoc and is subject to change
-            if abs(v1 - v3) > threshold or abs(v2 - v4) > threshold:
-                # ↓ Geometry №1, better sharp diagonals handling
+            done = False  # True when pyramid was written
+            if (max(v1, v2, v3, v4) - min(v1, v2, v3, v4)) > threshold:  # Geometry №1
                 if abs(v1 - v3) > abs(v2 - v4):
-                    v0 = (v2 + v4) / 2  # Fold along 2 - 4 diagonal
-                else:
-                    v0 = (v1 + v3) / 2  # Fold along 1 - 3 diagonal
-                # ↓ Fix for cases when only one corner is > 0
-                if v0 == 0:
-                    v0 = (v1 + v2 + v3 + v4) / 4
-            else:
-                # ↓ Geometry №3, better for smooth areas
-                v0 = (v1 + v2 + v3 + v4) / 4
-
-            # ↓ Finally going to build a pyramid!
-            #   Triangles are described counterclockwise.
-
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
-                # ↓ top part 1-2-0
-                tops.extend(
-                    [
-                        f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 1), _y_out(y, 0), v2, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-                # ↓ bottom part 2-1-0
-                bottoms.extend(
-                    [
-                        '  facet normal 0 0 -1\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
-                # ↓ top part 2-3-0
-                tops.extend(
-                    [
-                        f'  facet normal {_normal(_x_out(x, 1), _y_out(y, 0), v2, _x_out(x, 1), _y_out(y, 1), v3, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-                # ↓ bottom part 3-2-0
-                bottoms.extend(
-                    [
-                        '  facet normal 0 0 -1\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
-                # ↓ top part 3-4-0
-                tops.extend(
-                    [
-                        f'  facet normal {_normal(_x_out(x, 1), _y_out(y, 1), v3, _x_out(x, 0), _y_out(y, 1), v4, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-                # ↓ bottom part 4-3-0
-                bottoms.extend(
-                    [
-                        '  facet normal 0 0 -1\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-            if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
-                # ↓ top part 4-1-0
-                tops.extend(
-                    [
-                        f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 1), v4, _x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-                # ↓ bottom part 1-4-0
-                bottoms.extend(
-                    [
-                        '  facet normal 0 0 -1\n',
-                        '    outer loop\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
-                        f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
-                        '    endloop\n',
-                        '  endfacet\n',
-                    ]
-                )
-                # ↑ tops and bottoms ends
+                    if (v1 + v2 + v4) > (0.5 / maxcolors):  # triangle 1-2-4
+                        # ↓ top part 1-2-4
+                        tops.extend(
+                            [
+                                f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 1), _y_out(y, 0), v2, _x_out(x, 0), _y_out(y, 1), v4)}\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                        # ↓ bottom part 2-1-4
+                        bottoms.extend(
+                            [
+                                '  facet normal 0 0 -1\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                    if (v2 + v3 + v4) > (0.5 / maxcolors):  # triangle 2-3-4
+                        # ↓ top part 2-3-4
+                        tops.extend(
+                            [
+                                f'  facet normal {_normal(_x_out(x, 1), _y_out(y, 0), v2, _x_out(x, 1), _y_out(y, 1), v3, _x_out(x, 0), _y_out(y, 1), v4)}\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                        # ↓ bottom part 2-4-3
+                        bottoms.extend(
+                            [
+                                '  facet normal 0 0 -1\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                    done = True
+                if abs(v1 - v3) < abs(v2 - v4):
+                    if (v1 + v2 + v3) > (0.5 / maxcolors):  # triangle 1-2-3
+                        # ↓ top part 1-2-3
+                        tops.extend(
+                            [
+                                f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 1), _y_out(y, 0), v2, _x_out(x, 1), _y_out(y, 1), v3)}\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                        # ↓ bottom part 2-1-3
+                        bottoms.extend(
+                            [
+                                '  facet normal 0 0 -1\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                    if (v1 + v3 + v4) > (0.5 / maxcolors):  # triangle 1-3-4
+                        # ↓ top part 1-3-4
+                        tops.extend(
+                            [
+                                f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 1), _y_out(y, 1), v3, _x_out(x, 0), _y_out(y, 1), v4)}\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                        # ↓ bottom part 1-4-3
+                        bottoms.extend(
+                            [
+                                '  facet normal 0 0 -1\n',
+                                '    outer loop\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                                f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                                '    endloop\n',
+                                '  endfacet\n',
+                            ]
+                        )
+                    done = True
+            if not done:  # Geometry №3
+                v0 = (v1 + v2 + v3 + v4) / 4  # ⊠ center value is average
+                # ↓ tops and bottoms begin
+                if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
+                    # ↓ top part 1-2-0
+                    tops.extend(
+                        [
+                            f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 1), _y_out(y, 0), v2, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                    # ↓ bottom part 2-1-0
+                    bottoms.extend(
+                        [
+                            '  facet normal 0 0 -1\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
+                    # ↓ top part 2-3-0
+                    tops.extend(
+                        [
+                            f'  facet normal {_normal(_x_out(x, 1), _y_out(y, 0), v2, _x_out(x, 1), _y_out(y, 1), v3, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v2:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                    # ↓ bottom part 3-2-0
+                    bottoms.extend(
+                        [
+                            '  facet normal 0 0 -1\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
+                    # ↓ top part 3-4-0
+                    tops.extend(
+                        [
+                            f'  facet normal {_normal(_x_out(x, 1), _y_out(y, 1), v3, _x_out(x, 0), _y_out(y, 1), v4, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v3:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                    # ↓ bottom part 4-3-0
+                    bottoms.extend(
+                        [
+                            '  facet normal 0 0 -1\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 1):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                if (v1 + v2 + v3 + v4) > (0.5 / maxcolors):
+                    # ↓ top part 4-1-0
+                    tops.extend(
+                        [
+                            f'  facet normal {_normal(_x_out(x, 0), _y_out(y, 1), v4, _x_out(x, 0), _y_out(y, 0), v1, _x_out(x, 0.5), _y_out(y, 0.5), v0)}\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {v4:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {v1:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {v0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                    # ↓ bottom part 1-4-0
+                    bottoms.extend(
+                        [
+                            '  facet normal 0 0 -1\n',
+                            '    outer loop\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 0):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0):.{PRECISION}} {_y_out(y, 1):.{PRECISION}} {0:.{PRECISION}}\n',
+                            f'      vertex {_x_out(x, 0.5):.{PRECISION}} {_y_out(y, 0.5):.{PRECISION}} {0:.{PRECISION}}\n',
+                            '    endloop\n',
+                            '  endfacet\n',
+                        ]
+                    )
+                    # ↑ tops and bottoms ends
 
             # ↓ left side begins
             if x == 0:
