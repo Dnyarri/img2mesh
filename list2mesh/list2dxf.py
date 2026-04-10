@@ -85,8 +85,7 @@ from time import strftime
 
 
 def list2dxf(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
-    """Convert image (nested 3D list of ``x``, ``y``, ``z`` coordinates)
-    to Autodesk ASCII DXF triangle mesh.
+    """Convert image (nested list) to Autodesk ASCII DXF triangle mesh file.
 
     :param image3d: image as list of lists of lists of int channel values;
     :type image3d: list[list[list[int]]

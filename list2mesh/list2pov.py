@@ -94,8 +94,7 @@ from time import strftime
 
 
 def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
-    """Convert image (nested 3D list of ``x``, ``y``, ``z`` coordinates)
-    to POV-Ray triangle mesh.
+    """Convert image (nested list) to POV-Ray triangle mesh file.
 
     :param image3d: image as list of lists of lists of int channel values;
     :type image3d: list[list[list[int]]
@@ -227,7 +226,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 'By default exported map is five points linear spline, corresponding',
                 'to straight line, describing "identical" transform, i.e. input = output.',
                 'You can both edit existing control points and add new ones.',
-                'Note that points order is irrelevant, since POV-Ray will resort vectors',
+                'Note that points order is irrelevant, since POV-Ray will sort vectors',
                 'according to entry value (first number in the row before comma),',
                 'so you can add middle points at the end of the list below',
                 'or write the whole list upside down. */\n',
@@ -379,7 +378,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
         for x in range(X - 1):  # Mesh includes extra pixels at the right and below, therefore -1
             """ Building a pyramid (Geometry №3) or fold (Geometry №1).
 
-            Pixel order around default pixel 1:
+            Pixel order around default pixel 1 match Soviet Army «snail» scheme:
             ┌───┬───┐
             │ 1 │ 2 │
             ├───┼───┤
@@ -401,7 +400,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                 │ If threshold criterion for          │
                 │ Geometry №1 met, but both diagonals │
                 │ have equal difference, Geometry №3  │
-                │ is used, the flow is controlled by  │
+                │ is used; the flow is controlled by  │
                 │ "done" flag. ╭──────────────────────╯
                 ╰──────────────╯ """
             pyramid = []
@@ -409,7 +408,7 @@ def list2pov(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
 
             """ ╒═════ Geometry switch ═════════════╕
                 │ Switch between Geometry №1 and №3 │
-                │ based on diagonal local contast.  │
+                │ based on diagonal local contrast. │
                 │ Threshold set ad hoc and ╭────────╯
                 │ is subject to change.    │
                 ╰──────────────────────────╯ """

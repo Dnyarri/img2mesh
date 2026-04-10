@@ -91,8 +91,7 @@ from math import sqrt
 
 
 def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str, threshold: float = 0.05) -> None:
-    """Convert image (nested 3D list of ``x``, ``y``, ``z`` coordinates)
-    to ASCII STL triangle mesh.
+    """Convert image (nested list) to ASCII STL triangle mesh file.
 
     :param image3d: image as list of lists of lists of int channel values;
     :type image3d: list[list[list[int]]
@@ -553,14 +552,13 @@ def list2stl(image3d: list[list[list[int]]], maxcolors: int, resultfilename: str
                     )
             # ↑ close side ends
 
-    # ↓ Combining all lists to file
-    #   Joining to str gives ca. 3x writing speed vs. writelines,
-    #   but too big a str will take much memory, therefore
-    #   writing is implemented by chunks, taking into account that
-    #   one facet takes 7 lines. On my system speedup effect kicks in
-    #   at chunk_size = 280 and stabilize at chunk_size = 560.
-    #   chunk_size = 700 equals to 25 pyramids.
-    chunk_size = 700
+    """Combining all lists to file.
+    Joining to str gives ca. 3x writing speed vs. writelines, but too big a str
+    will take much memory, therefore writing is implemented by chunks,
+    taking into account that one facet takes 7 lines. On my system speedup effect
+    kicks in at chunk_size = 280 and stabilize at chunk_size = 560."""
+
+    chunk_size = 700  # equal to 25 pyramids
     with open(resultfilename, 'w') as resultfile:
         resultfile.write('solid pryanik_nepechatnyj\n')  # STL file header
         for i in range(0, len(bottoms), chunk_size):
