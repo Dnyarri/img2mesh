@@ -44,7 +44,7 @@ __author__ = 'Ilya Razmanov'
 __copyright__ = '(c) 2025-2026 Ilya Razmanov'
 __credits__ = 'Ilya Razmanov'
 __license__ = 'unlicense'
-__version__ = '4.28.1.8'  # 1 Apr 2026
+__version__ = '4.32.12.17'  # 12 Aug 2026
 __maintainer__ = 'Ilya Razmanov'
 __email__ = 'ilyarazmanov@gmail.com'
 __status__ = 'Production'
@@ -55,10 +55,9 @@ from tkinter import Button, DoubleVar, Frame, Label, Menu, Menubutton, PhotoImag
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showinfo
 
+from list2mesh import list2dxf, list2obj, list2pov, list2stl
 from pypng import png2list
 from pypnm import list2bin, pnm2list
-
-from list2mesh import list2dxf, list2obj, list2pov, list2stl
 
 
 def DisMiss(event=None) -> None:
@@ -139,7 +138,7 @@ def GetSource(event=None) -> None:
 
     if Path(sourcefilename).suffix.lower() == '.png':
         # ↓ Reading image as list
-        X, Y, Z, maxcolors, image3D, info = png2list(sourcefilename)
+        X, Y, Z, maxcolors, image3D, info = png2list(sourcefilename)  # noqa: RUF059
 
     elif Path(sourcefilename).suffix.lower() in ('.ppm', '.pgm', '.pbm', '.pnm'):
         # ↓ Reading image as list
@@ -213,7 +212,6 @@ def GetSource(event=None) -> None:
 def SaveAsPOV() -> None:
     """Once selected Export POV-Ray."""
 
-    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save POV-Ray file',
         filetypes=[
@@ -224,7 +222,7 @@ def SaveAsPOV() -> None:
         initialfile=Path(sourcefilename).stem + '_Mesh.pov',
     )
     if savefilename == '':
-        return None
+        return
 
     # ↓ Converting list to POV and saving as "savefilename"
     UIBusy()
@@ -235,7 +233,6 @@ def SaveAsPOV() -> None:
 def SaveAsOBJ() -> None:
     """Once selected Export OBJ."""
 
-    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save Wavefront OBJ file',
         filetypes=[
@@ -246,7 +243,7 @@ def SaveAsOBJ() -> None:
         initialfile=Path(sourcefilename).stem + '.obj',
     )
     if savefilename == '':
-        return None
+        return
 
     # ↓ Converting list to OBJ and saving as "savefilename"
     UIBusy()
@@ -257,7 +254,6 @@ def SaveAsOBJ() -> None:
 def SaveAsSTL() -> None:
     """Once selected Export STL."""
 
-    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save STL file',
         filetypes=[
@@ -268,7 +264,7 @@ def SaveAsSTL() -> None:
         initialfile=Path(sourcefilename).stem + '.stl',
     )
     if savefilename == '':
-        return None
+        return
 
     # ↓ Converting list to STL and saving as "savefilename"
     UIBusy()
@@ -279,7 +275,6 @@ def SaveAsSTL() -> None:
 def SaveAsDXF() -> None:
     """Once selected Export DXF."""
 
-    global sourcefilename
     savefilename = asksaveasfilename(
         title='Save Autodesk DXF file',
         filetypes=[
@@ -290,7 +285,7 @@ def SaveAsDXF() -> None:
         initialfile=Path(sourcefilename).stem + '.dxf',
     )
     if savefilename == '':
-        return None
+        return
 
     # ↓ Converting list to DXF and saving as "savefilename"
     UIBusy()
@@ -302,6 +297,7 @@ def zoomIn(event=None) -> None:
     """Zoom preview in."""
 
     global zoom_factor, preview
+
     zoom_factor = min(zoom_factor + 1, 4)  # max zoom 5
     preview = PhotoImage(data=preview_data)
     preview = zoom_do[zoom_factor]
@@ -321,6 +317,7 @@ def zoomOut(event=None) -> None:
     """Zoom preview out."""
 
     global zoom_factor, preview
+
     zoom_factor = max(zoom_factor - 1, -4)  # min zoom 1/5
     preview = PhotoImage(data=preview_data)
     preview = zoom_do[zoom_factor]
@@ -361,10 +358,7 @@ def valiDig(new_value):
 
     try:
         _ = float(new_value)
-        if _ >= 0 and _ <= 1.0:
-            return True
-        else:
-            return False
+        return _ >= 0 and _ <= 1.0
     except ValueError:
         return False
 
@@ -472,7 +466,7 @@ spin01 = Spinbox(
     increment=0.01,
     textvariable=geometry_threshold,
     state='disabled',
-    width=5,
+    width=6,
     font=butt['font'],
     validate='key',
     validatecommand=(validate_entry, '%P'),
