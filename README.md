@@ -15,7 +15,7 @@ Python program for conversion of bitmap heightfield (in PNG or PGM/PPM format) t
 
 | Import image format | Export 3D mesh format |
 | ------ | ------ |
-| 16 and 8 bits per channel PNG, PGM and PPM  | POV, OBJ, ASCII STL, ASCII DXF |
+| 16 and 8 bits per channel PNG, PGM and PPM | POV, OBJ, ASCII STL, ASCII DXF |
 
 ## Project content
 
